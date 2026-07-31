@@ -31,13 +31,19 @@
   #kiosk-root .display { font-family: 'Space Grotesk', sans-serif; }
   #kiosk-root .card { width: 100%; max-width: 480px; background: var(--paper); border-radius: 18px;
     box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04); overflow: hidden; }
-  #kiosk-root[data-rolle="handwerker"] .fortschritt .punkt[data-erledigt="true"] { background: var(--teal); }
-  #kiosk-root .top { padding: 26px 28px 0 28px; }
+  #kiosk-root .top { padding: 26px 28px 0 28px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   #kiosk-root .eyebrow { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A7263; margin: 0 0 4px 0; font-weight: 600; }
   #kiosk-root h1 { font-size: 23px; margin: 0 0 18px 0; letter-spacing: -0.01em; line-height: 1.25; }
+
+  #kiosk-root .sprache-schalter { display: flex; gap: 4px; flex-shrink: 0; }
+  #kiosk-root .sprache-schalter button { padding: 6px 10px; border-radius: 7px; border: 1.5px solid var(--line);
+    background: transparent; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #8A8272; }
+  #kiosk-root .sprache-schalter button[data-active="true"] { background: var(--paper-2); color: var(--ink); border-color: var(--ink); }
+
   #kiosk-root .fortschritt { display: flex; gap: 6px; padding: 0 28px; margin-bottom: 18px; }
   #kiosk-root .fortschritt .punkt { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
   #kiosk-root .fortschritt .punkt[data-erledigt="true"] { background: var(--amber); }
+  #kiosk-root[data-rolle="handwerker"] .fortschritt .punkt[data-erledigt="true"] { background: var(--teal); }
 
   #kiosk-root .rollen { display: flex; flex-direction: column; gap: 10px; padding: 0 28px 28px 28px; }
   #kiosk-root .rollen-btn { padding: 18px 16px; border-radius: 14px; border: 2px solid var(--line); background: #fff;
@@ -72,14 +78,15 @@
   #kiosk-root .review-zeile span:first-child { color: #8A8272; flex-shrink: 0; }
   #kiosk-root .review-zeile span:last-child { text-align: right; font-weight: 600; }
 
-  #kiosk-root .liste { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+  #kiosk-root .suchfeld { padding: 0 28px 14px 28px; }
+  #kiosk-root .such-hinweis { padding: 10px 28px 24px 28px; color: #8A8272; font-size: 13px; text-align: center; margin: 0; }
+  #kiosk-root .liste { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding: 0 28px 20px 28px; }
   #kiosk-root .liste-item { padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff;
     text-align: left; cursor: pointer; font-family: inherit; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   #kiosk-root .liste-item .n { font-weight: 700; font-size: 15px; }
   #kiosk-root .liste-item .s { font-size: 12px; color: #8A8272; }
   #kiosk-root .liste-item .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px;
     border-radius: 999px; background: var(--paper-2); color: #6B6355; flex-shrink: 0; }
-  #kiosk-root .leer { padding: 24px; text-align: center; color: #8A8272; font-size: 14px; }
 
   #kiosk-root .toggle-zeile { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 4px 0; }
   #kiosk-root .toggle-zeile input { width: auto; }
@@ -110,19 +117,107 @@
     root.style.backgroundPosition = 'center';
   }
 
+  // --- Übersetzungen ---------------------------------------------------------
+
+  const UEBERSETZUNGEN = {
+    de: {
+      empfang: 'Empfang', willkommen_default: 'Willkommen!',
+      rolle_besucher_titel: 'Ich bin Besucher', rolle_besucher_sub: 'Neu anmelden',
+      rolle_handwerker_titel: 'Ich bin Handwerker', rolle_handwerker_sub: 'Neu anmelden, ggf. mit Schlüssel',
+      rolle_abmelden_titel: 'Ich möchte mich abmelden', rolle_abmelden_sub: 'Für bereits angemeldete Besucher & Handwerker',
+      name_titel: 'Wie ist Ihr Name?', name_label: 'Vor- und Nachname', name_platzhalter: 'Max Mustermann',
+      firma_titel: 'Für welche Firma sind Sie hier?', firma_label: 'Firma (optional)', firma_platzhalter: 'Firma GmbH',
+      details_titel: 'Wen möchten Sie besuchen?', ansprechpartner_label: 'Ansprechperson', ansprechpartner_platzhalter: 'Name der Ansprechperson',
+      grund_label: 'Grund des Besuchs (optional)', grund_platzhalter: 'z. B. Meeting, Lieferung',
+      schluessel_frage_titel: 'Brauchen Sie einen Schlüssel?', ja: 'Ja', nein: 'Nein',
+      schluessel_name_titel: 'Welchen Schlüssel benötigen Sie?', schluessel_label: 'Schlüssel / Objekt', schluessel_platzhalter: 'z. B. Keller, Raum 2.14',
+      review_titel: 'Bitte prüfen', review_name: 'Name', review_firma: 'Firma', review_ansprechpartner: 'Ansprechperson',
+      review_grund: 'Grund', review_schluessel: 'Schlüssel', review_schluessel_nicht_benoetigt: 'nicht benötigt',
+      weiter: 'Weiter', zurueck: 'Zurück', absenden_besucher: 'Anmeldung abschicken', absenden_handwerker: 'Vorgang bestätigen',
+      wird_gespeichert: 'Wird gespeichert…',
+      fehler_name: 'Bitte Namen eingeben.', fehler_ansprechpartner: 'Bitte angeben, wen Sie besuchen möchten.',
+      fehler_schluessel: 'Bitte Schlüssel bzw. Objekt angeben.', fehler_speichern: 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.',
+      abmeldung_eyebrow: 'Abmeldung — {standort}', abmeldung_titel: 'Wer möchte sich abmelden?',
+      abmeldung_suchen_platzhalter: 'Namen eingeben…', abmeldung_suche_hinweis: 'Bitte mindestens 2 Zeichen eingeben.',
+      abmeldung_keine_treffer: 'Keine Treffer.', laedt: 'Lädt…',
+      badge_besucher: 'Besucher', badge_handwerker: 'Handwerker',
+      abmeldung_bestaetigen_titel: 'Auf Wiedersehen, {name}?', abmeldung_schluessel_zeile: 'Schlüssel',
+      abmeldung_zurueckgeben_label: 'Schlüssel jetzt zurückgeben', abmeldung_btn: 'Abmelden',
+      fehler_abmelden: 'Abmelden fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.',
+      fertig_anmeldung_titel: 'Danke, {name}!', fertig_abmeldung_titel: 'Auf Wiedersehen, {name}!',
+      fertig_besucher_text: 'Ihre Anmeldung wurde übermittelt.', fertig_handwerker_text: 'Ihre Anmeldung wurde erfasst.',
+      fertig_abmeldung_text: 'Ihre Abmeldung wurde erfasst.'
+    },
+    en: {
+      empfang: 'Reception', willkommen_default: 'Welcome!',
+      rolle_besucher_titel: 'I am a visitor', rolle_besucher_sub: 'New check-in',
+      rolle_handwerker_titel: 'I am a contractor', rolle_handwerker_sub: 'New check-in, with key if needed',
+      rolle_abmelden_titel: 'I want to check out', rolle_abmelden_sub: 'For visitors & contractors already checked in',
+      name_titel: 'What is your name?', name_label: 'Full name', name_platzhalter: 'Jane Smith',
+      firma_titel: 'Which company are you here for?', firma_label: 'Company (optional)', firma_platzhalter: 'Company Ltd.',
+      details_titel: 'Who are you visiting?', ansprechpartner_label: 'Contact person', ansprechpartner_platzhalter: 'Name of contact person',
+      grund_label: 'Reason for visit (optional)', grund_platzhalter: 'e.g. meeting, delivery',
+      schluessel_frage_titel: 'Do you need a key?', ja: 'Yes', nein: 'No',
+      schluessel_name_titel: 'Which key do you need?', schluessel_label: 'Key / object', schluessel_platzhalter: 'e.g. basement, room 2.14',
+      review_titel: 'Please review', review_name: 'Name', review_firma: 'Company', review_ansprechpartner: 'Contact person',
+      review_grund: 'Reason', review_schluessel: 'Key', review_schluessel_nicht_benoetigt: 'not needed',
+      weiter: 'Next', zurueck: 'Back', absenden_besucher: 'Submit check-in', absenden_handwerker: 'Confirm',
+      wird_gespeichert: 'Saving…',
+      fehler_name: 'Please enter a name.', fehler_ansprechpartner: 'Please specify who you are visiting.',
+      fehler_schluessel: 'Please specify the key or object.', fehler_speichern: 'Saving failed. Please try again or contact reception.',
+      abmeldung_eyebrow: 'Check-out — {standort}', abmeldung_titel: 'Who would like to check out?',
+      abmeldung_suchen_platzhalter: 'Enter name…', abmeldung_suche_hinweis: 'Please enter at least 2 characters.',
+      abmeldung_keine_treffer: 'No matches.', laedt: 'Loading…',
+      badge_besucher: 'Visitor', badge_handwerker: 'Contractor',
+      abmeldung_bestaetigen_titel: 'Goodbye, {name}?', abmeldung_schluessel_zeile: 'Key',
+      abmeldung_zurueckgeben_label: 'Return key now', abmeldung_btn: 'Check out',
+      fehler_abmelden: 'Check-out failed. Please try again or contact reception.',
+      fertig_anmeldung_titel: 'Thank you, {name}!', fertig_abmeldung_titel: 'Goodbye, {name}!',
+      fertig_besucher_text: 'Your check-in has been submitted.', fertig_handwerker_text: 'Your check-in has been recorded.',
+      fertig_abmeldung_text: 'Your check-out has been recorded.'
+    }
+  };
+
+  function t(schluessel, vars) {
+    let text = (UEBERSETZUNGEN[state.sprache] && UEBERSETZUNGEN[state.sprache][schluessel]) || UEBERSETZUNGEN.de[schluessel] || schluessel;
+    if (vars) Object.keys(vars).forEach(k => { text = text.replace(`{${k}}`, vars[k]); });
+    return text;
+  }
+
+  function spracheSchalterHtml() {
+    return `<div class="sprache-schalter">
+      <button type="button" data-sprache="de" data-active="${state.sprache === 'de'}">DE</button>
+      <button type="button" data-sprache="en" data-active="${state.sprache === 'en'}">EN</button>
+    </div>`;
+  }
+
+  // Delegierter Listener: funktioniert nach jedem Re-Render weiter, da nur
+  // die Kinder von #kiosk-root ersetzt werden, nicht das Element selbst.
+  root.addEventListener('click', e => {
+    const btn = e.target.closest('.sprache-schalter button');
+    if (!btn) return;
+    state.sprache = btn.dataset.sprache;
+    render();
+  });
+
+  // --- Zustand -----------------------------------------------------------------
+
   function leererState() {
     return {
+      sprache: 'de',
       rolle: null,
       stepIndex: 0,
       standort: window.KIOSK_CONFIG.standort,
       name: '', firma: '', ansprechpartner: '', grund: '',
       brauchtSchluessel: null, schluessel: '',
-      offeneEintraege: [], offeneLoading: false, offeneGeladen: false,
+      suchbegriff: '', suchergebnisse: null, sucheLaedt: false,
       ausgewaehlt: null, schluesselZurueck: true,
       submitting: false, error: '', fertig: null
     };
   }
   let state = leererState();
+  let suchTimer = null;
+  let suchAnfrageId = 0;
 
   function currentSteps() {
     if (state.rolle === 'besucher') return ['name', 'firma', 'details', 'review'];
@@ -136,6 +231,7 @@
   }
 
   function render() {
+    document.documentElement.lang = state.sprache;
     root.dataset.rolle = state.rolle || '';
     if (state.fertig) return renderFertig();
     if (state.rolle === 'abmelden') return renderAbmelden();
@@ -150,21 +246,21 @@
   function renderStart() {
     cardShell(`
       <div class="top">
-        <p class="eyebrow">Empfang — ${escapeHtml(state.standort)}</p>
-        <h1 class="display">${escapeHtml(window.KIOSK_CONFIG.willkommenstext || 'Willkommen!')}</h1>
+        <div><p class="eyebrow">${t('empfang')} — ${escapeHtml(state.standort)}</p><h1 class="display">${escapeHtml(window.KIOSK_CONFIG.willkommenstext || t('willkommen_default'))}</h1></div>
+        ${spracheSchalterHtml()}
       </div>
       <div class="rollen">
         <button type="button" class="rollen-btn" data-rolle="besucher">
-          <span class="titel">Ich bin Besucher</span>
-          <span class="sub">Neu anmelden</span>
+          <span class="titel">${t('rolle_besucher_titel')}</span>
+          <span class="sub">${t('rolle_besucher_sub')}</span>
         </button>
         <button type="button" class="rollen-btn" data-rolle="handwerker">
-          <span class="titel">Ich bin Handwerker</span>
-          <span class="sub">Neu anmelden, ggf. mit Schlüssel</span>
+          <span class="titel">${t('rolle_handwerker_titel')}</span>
+          <span class="sub">${t('rolle_handwerker_sub')}</span>
         </button>
         <button type="button" class="rollen-btn leise" data-rolle="abmelden">
-          <span class="titel">Ich möchte mich abmelden</span>
-          <span class="sub">Für bereits angemeldete Besucher &amp; Handwerker</span>
+          <span class="titel">${t('rolle_abmelden_titel')}</span>
+          <span class="sub">${t('rolle_abmelden_sub')}</span>
         </button>
       </div>
     `);
@@ -185,65 +281,63 @@
     const steps = currentSteps();
     if (state.stepIndex >= steps.length) state.stepIndex = steps.length - 1;
     const step = steps[state.stepIndex];
-    const istLetzter = state.stepIndex === steps.length - 1;
 
     let titel = '';
     let body = '';
     let weiterAktiv = true;
-    let weiterText = 'Weiter';
+    let weiterText = t('weiter');
     let weiterAktion = 'weiter';
 
     if (step === 'name') {
-      titel = state.rolle === 'besucher' ? 'Wie ist Ihr Name?' : 'Wie ist Ihr Name?';
-      body = `<div><label for="f-name">Vor- und Nachname</label><input id="f-name" value="${escapeAttr(state.name)}" placeholder="Max Mustermann" autocomplete="off" /></div>`;
+      titel = t('name_titel');
+      body = `<div><label for="f-name">${t('name_label')}</label><input id="f-name" value="${escapeAttr(state.name)}" placeholder="${t('name_platzhalter')}" autocomplete="off" /></div>`;
       weiterAktiv = !!state.name.trim();
     } else if (step === 'firma') {
-      titel = 'Für welche Firma sind Sie hier?';
-      body = `<div><label for="f-firma">Firma (optional)</label><input id="f-firma" value="${escapeAttr(state.firma)}" placeholder="Firma GmbH" autocomplete="off" /></div>`;
+      titel = t('firma_titel');
+      body = `<div><label for="f-firma">${t('firma_label')}</label><input id="f-firma" value="${escapeAttr(state.firma)}" placeholder="${t('firma_platzhalter')}" autocomplete="off" /></div>`;
       weiterAktiv = true;
     } else if (step === 'details') {
-      titel = 'Wen möchten Sie besuchen?';
+      titel = t('details_titel');
       body = `
-        <div><label for="f-ansprechpartner">Ansprechperson</label><input id="f-ansprechpartner" value="${escapeAttr(state.ansprechpartner)}" placeholder="Name der Ansprechperson" autocomplete="off" /></div>
-        <div><label for="f-grund">Grund des Besuchs (optional)</label><input id="f-grund" value="${escapeAttr(state.grund)}" placeholder="z. B. Meeting, Lieferung" autocomplete="off" /></div>
+        <div><label for="f-ansprechpartner">${t('ansprechpartner_label')}</label><input id="f-ansprechpartner" value="${escapeAttr(state.ansprechpartner)}" placeholder="${t('ansprechpartner_platzhalter')}" autocomplete="off" /></div>
+        <div><label for="f-grund">${t('grund_label')}</label><input id="f-grund" value="${escapeAttr(state.grund)}" placeholder="${t('grund_platzhalter')}" autocomplete="off" /></div>
       `;
       weiterAktiv = !!state.ansprechpartner.trim();
     } else if (step === 'schluessel-frage') {
-      titel = 'Brauchen Sie einen Schlüssel?';
       root.dataset.rolle = 'handwerker';
       cardShell(`
-        <div class="top">${fortschrittHtml(steps)}<h1 class="display">${titel}</h1></div>
+        <div class="top"><div>${fortschrittHtml(steps)}<h1 class="display" style="margin-top:8px">${t('schluessel_frage_titel')}</h1></div>${spracheSchalterHtml()}</div>
         <div class="wahl-row">
-          <button type="button" id="btn-nein">Nein</button>
-          <button type="button" id="btn-ja">Ja</button>
+          <button type="button" id="btn-nein">${t('nein')}</button>
+          <button type="button" id="btn-ja">${t('ja')}</button>
         </div>
-        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button></div>
+        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">${t('zurueck')}</button></div>
       `);
       root.querySelector('#btn-ja').addEventListener('click', () => { state.brauchtSchluessel = 'ja'; state.stepIndex++; render(); });
       root.querySelector('#btn-nein').addEventListener('click', () => { state.brauchtSchluessel = 'nein'; state.schluessel = ''; state.stepIndex++; render(); });
       root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
       return;
     } else if (step === 'schluessel-name') {
-      titel = 'Welchen Schlüssel benötigen Sie?';
-      body = `<div><label for="f-schluessel">Schlüssel / Objekt</label><input id="f-schluessel" value="${escapeAttr(state.schluessel)}" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" /></div>`;
+      titel = t('schluessel_name_titel');
+      body = `<div><label for="f-schluessel">${t('schluessel_label')}</label><input id="f-schluessel" value="${escapeAttr(state.schluessel)}" placeholder="${t('schluessel_platzhalter')}" autocomplete="off" /></div>`;
       weiterAktiv = !!state.schluessel.trim();
     } else if (step === 'review') {
-      titel = 'Bitte prüfen';
-      const zeilen = [['Name', state.name], ['Firma', state.firma || '—']];
-      if (state.rolle === 'besucher') { zeilen.push(['Ansprechperson', state.ansprechpartner]); zeilen.push(['Grund', state.grund || '—']); }
-      if (state.rolle === 'handwerker') { zeilen.push(['Schlüssel', state.brauchtSchluessel === 'ja' ? state.schluessel : 'nicht benötigt']); }
+      titel = t('review_titel');
+      const zeilen = [[t('review_name'), state.name], [t('review_firma'), state.firma || '—']];
+      if (state.rolle === 'besucher') { zeilen.push([t('review_ansprechpartner'), state.ansprechpartner]); zeilen.push([t('review_grund'), state.grund || '—']); }
+      if (state.rolle === 'handwerker') { zeilen.push([t('review_schluessel'), state.brauchtSchluessel === 'ja' ? state.schluessel : t('review_schluessel_nicht_benoetigt')]); }
       body = zeilen.map(([k, v]) => `<div class="review-zeile"><span>${escapeHtml(k)}</span><span>${escapeHtml(v)}</span></div>`).join('');
-      weiterText = state.submitting ? 'Wird gespeichert…' : 'Anmeldung abschicken';
+      weiterText = state.submitting ? t('wird_gespeichert') : (state.rolle === 'besucher' ? t('absenden_besucher') : t('absenden_handwerker'));
       weiterAktion = 'absenden';
       weiterAktiv = !state.submitting;
     }
 
     cardShell(`
-      <div class="top">${fortschrittHtml(steps)}<h1 class="display">${titel}</h1></div>
+      <div class="top"><div>${fortschrittHtml(steps)}<h1 class="display" style="margin-top:8px">${titel}</h1></div>${spracheSchalterHtml()}</div>
       <form id="wizard-form" novalidate>${body}</form>
       <p class="error">${escapeHtml(state.error)}</p>
       <div class="step-nav">
-        <button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button>
+        <button type="button" class="zurueck-btn" id="btn-zurueck">${t('zurueck')}</button>
         <button type="button" class="weiter-btn" id="btn-weiter" ${weiterAktiv ? '' : 'disabled'}>${weiterText}</button>
       </div>
     `);
@@ -259,13 +353,25 @@
     const schluesselInput = root.querySelector('#f-schluessel');
     if (schluesselInput) schluesselInput.addEventListener('input', e => { state.schluessel = e.target.value; syncWeiterButton(); });
 
-    root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
-    root.querySelector('#btn-weiter').addEventListener('click', () => {
-      if (weiterAktion === 'absenden') { submitAnmeldung(); return; }
-      state.error = '';
-      state.stepIndex++;
-      render();
+    // Wichtig: verhindert, dass Enter im Eingabefeld das <form> nativ absendet
+    // (das hätte einen vollständigen Seiten-Reload und Zurücksetzen des
+    // Assistenten zur Folge). Enter löst stattdessen dieselbe Aktion wie der
+    // "Weiter"-Button aus.
+    root.querySelector('#wizard-form').addEventListener('submit', e => {
+      e.preventDefault();
+      weiterAktionAusfuehren(weiterAktion, weiterAktiv);
     });
+
+    root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
+    root.querySelector('#btn-weiter').addEventListener('click', () => weiterAktionAusfuehren(weiterAktion, weiterAktiv));
+  }
+
+  function weiterAktionAusfuehren(weiterAktion, weiterAktiv) {
+    if (!weiterAktiv) return;
+    if (weiterAktion === 'absenden') { submitAnmeldung(); return; }
+    state.error = '';
+    state.stepIndex++;
+    render();
   }
 
   function syncWeiterButton() {
@@ -283,7 +389,9 @@
   function goBack() {
     state.error = '';
     if (state.stepIndex > 0) { state.stepIndex--; render(); return; }
+    const sprache = state.sprache;
     state = leererState();
+    state.sprache = sprache;
     render();
   }
 
@@ -307,80 +415,111 @@
 
     if (!ok) {
       state.submitting = false;
-      state.error = serverError || 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      state.error = serverError || t('fehler_speichern');
       render();
       return;
     }
 
     const name = state.name.trim();
     const rolle = state.rolle;
+    const sprache = state.sprache;
     state = leererState();
+    state.sprache = sprache;
     state.fertig = { art: 'anmeldung', rolle, name };
     render();
   }
 
-  // --- Abmeldung ------------------------------------------------------------
+  // --- Abmeldung (Suche statt Vollliste, damit niemand sehen kann, wer im Haus ist) --
 
-  async function renderAbmelden() {
-    if (!state.offeneGeladen && !state.offeneLoading) {
-      state.offeneLoading = true;
-      cardShell(`<div class="top"><p class="eyebrow">Abmeldung</p><h1 class="display">Wer möchte sich abmelden?</h1></div><div class="step-body"><p class="leer">Lädt…</p></div>`);
-      try {
-        const res = await fetch(`/api/checkins/offene-liste?standort=${encodeURIComponent(state.standort)}`, {
-          headers: { 'x-api-key': window.KIOSK_CONFIG.apiKey }
-        });
-        state.offeneEintraege = res.ok ? await res.json() : [];
-      } catch (e) { state.offeneEintraege = []; }
-      state.offeneLoading = false;
-      state.offeneGeladen = true;
-      render();
-      return;
-    }
-
+  function renderAbmelden() {
     if (!state.ausgewaehlt) {
-      const liste = state.offeneEintraege.length
-        ? `<div class="liste">${state.offeneEintraege.map(e => `
-            <button type="button" class="liste-item" data-id="${e.id}" data-typ="${e.typ}">
-              <span><span class="n">${escapeHtml(e.name)}</span><br/><span class="s">${escapeHtml(e.firma || '—')}</span></span>
-              <span class="badge">${e.typ === 'besucher' ? 'Besucher' : 'Handwerker'}</span>
-            </button>
-          `).join('')}</div>`
-        : `<p class="leer">Aktuell ist niemand als anwesend erfasst.</p>`;
       cardShell(`
-        <div class="top"><p class="eyebrow">Abmeldung — ${escapeHtml(state.standort)}</p><h1 class="display">Wer möchte sich abmelden?</h1></div>
-        <div class="step-body">${liste}</div>
-        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button></div>
+        <div class="top">
+          <div><p class="eyebrow">${t('abmeldung_eyebrow', { standort: state.standort })}</p><h1 class="display">${t('abmeldung_titel')}</h1></div>
+          ${spracheSchalterHtml()}
+        </div>
+        <div class="suchfeld"><input type="text" id="such-input" value="${escapeAttr(state.suchbegriff)}" placeholder="${t('abmeldung_suchen_platzhalter')}" autocomplete="off" /></div>
+        <div id="such-ergebnisse"></div>
+        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">${t('zurueck')}</button></div>
       `);
-      root.querySelectorAll('.liste-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const eintrag = state.offeneEintraege.find(e => String(e.id) === btn.dataset.id && e.typ === btn.dataset.typ);
-          state.ausgewaehlt = eintrag;
-          render();
-        });
+      const input = root.querySelector('#such-input');
+      input.focus();
+      input.addEventListener('input', e => {
+        state.suchbegriff = e.target.value;
+        clearTimeout(suchTimer);
+        suchTimer = setTimeout(sucheAusloesen, 300);
+        renderSuchErgebnisse();
       });
-      root.querySelector('#btn-zurueck').addEventListener('click', () => { state = leererState(); render(); });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); clearTimeout(suchTimer); sucheAusloesen(); }
+      });
+      root.querySelector('#btn-zurueck').addEventListener('click', () => { const sprache = state.sprache; state = leererState(); state.sprache = sprache; render(); });
+      renderSuchErgebnisse();
       return;
     }
 
     const hatOffenenSchluessel = state.ausgewaehlt.typ === 'handwerker' && !!state.ausgewaehlt.schluessel;
     cardShell(`
-      <div class="top"><p class="eyebrow">Abmeldung</p><h1 class="display">Auf Wiedersehen, ${escapeHtml(state.ausgewaehlt.name)}?</h1></div>
+      <div class="top">
+        <div><p class="eyebrow">${t('abmeldung_eyebrow', { standort: state.standort })}</p><h1 class="display">${t('abmeldung_bestaetigen_titel', { name: escapeHtml(state.ausgewaehlt.name) })}</h1></div>
+        ${spracheSchalterHtml()}
+      </div>
       <div class="step-body">
         ${hatOffenenSchluessel ? `
-          <div class="review-zeile"><span>Schlüssel</span><span>${escapeHtml(state.ausgewaehlt.schluessel)}</span></div>
-          <div class="toggle-zeile"><input type="checkbox" id="chk-zurueck" ${state.schluesselZurueck ? 'checked' : ''} /><label for="chk-zurueck" style="margin:0">Schlüssel jetzt zurückgeben</label></div>
+          <div class="review-zeile"><span>${t('abmeldung_schluessel_zeile')}</span><span>${escapeHtml(state.ausgewaehlt.schluessel)}</span></div>
+          <div class="toggle-zeile"><input type="checkbox" id="chk-zurueck" ${state.schluesselZurueck ? 'checked' : ''} /><label for="chk-zurueck" style="margin:0">${t('abmeldung_zurueckgeben_label')}</label></div>
         ` : ''}
       </div>
       <p class="error">${escapeHtml(state.error)}</p>
       <div class="step-nav">
-        <button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button>
-        <button type="button" class="weiter-btn" id="btn-bestaetigen">${state.submitting ? 'Wird gespeichert…' : 'Abmelden'}</button>
+        <button type="button" class="zurueck-btn" id="btn-zurueck">${t('zurueck')}</button>
+        <button type="button" class="weiter-btn" id="btn-bestaetigen">${state.submitting ? t('wird_gespeichert') : t('abmeldung_btn')}</button>
       </div>
     `);
     const chk = root.querySelector('#chk-zurueck');
     if (chk) chk.addEventListener('change', e => { state.schluesselZurueck = e.target.checked; });
     root.querySelector('#btn-zurueck').addEventListener('click', () => { state.ausgewaehlt = null; render(); });
     root.querySelector('#btn-bestaetigen').addEventListener('click', () => submitAbmeldung());
+  }
+
+  async function sucheAusloesen() {
+    const anfrageId = ++suchAnfrageId;
+    const begriff = state.suchbegriff.trim();
+    if (begriff.length < 2) { state.suchergebnisse = null; renderSuchErgebnisse(); return; }
+    state.sucheLaedt = true;
+    renderSuchErgebnisse();
+    let ergebnisse = [];
+    try {
+      const res = await fetch(`/api/checkins/suche?standort=${encodeURIComponent(state.standort)}&q=${encodeURIComponent(begriff)}`, {
+        headers: { 'x-api-key': window.KIOSK_CONFIG.apiKey }
+      });
+      ergebnisse = res.ok ? await res.json() : [];
+    } catch (e) { ergebnisse = []; }
+    if (anfrageId !== suchAnfrageId) return; // veraltete Antwort ignorieren
+    state.sucheLaedt = false;
+    state.suchergebnisse = ergebnisse;
+    renderSuchErgebnisse();
+  }
+
+  function renderSuchErgebnisse() {
+    const container = root.querySelector('#such-ergebnisse');
+    if (!container) return;
+    if (state.suchbegriff.trim().length < 2) { container.innerHTML = `<p class="such-hinweis">${t('abmeldung_suche_hinweis')}</p>`; return; }
+    if (state.sucheLaedt) { container.innerHTML = `<p class="such-hinweis">${t('laedt')}</p>`; return; }
+    if (!state.suchergebnisse || !state.suchergebnisse.length) { container.innerHTML = `<p class="such-hinweis">${t('abmeldung_keine_treffer')}</p>`; return; }
+    container.innerHTML = `<div class="liste">${state.suchergebnisse.map(e => `
+      <button type="button" class="liste-item" data-id="${e.id}" data-typ="${e.typ}">
+        <span><span class="n">${escapeHtml(e.name)}</span><br/><span class="s">${escapeHtml(e.firma || '—')}</span></span>
+        <span class="badge">${e.typ === 'besucher' ? t('badge_besucher') : t('badge_handwerker')}</span>
+      </button>
+    `).join('')}</div>`;
+    container.querySelectorAll('.liste-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const eintrag = state.suchergebnisse.find(e => String(e.id) === btn.dataset.id && e.typ === btn.dataset.typ);
+        state.ausgewaehlt = eintrag;
+        render();
+      });
+    });
   }
 
   async function submitAbmeldung() {
@@ -399,12 +538,14 @@
 
     if (!ok) {
       state.submitting = false;
-      state.error = serverError || 'Abmelden fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      state.error = serverError || t('fehler_abmelden');
       render();
       return;
     }
 
+    const sprache = state.sprache;
     state = leererState();
+    state.sprache = sprache;
     state.fertig = { art: 'abmeldung', name };
     render();
   }
@@ -413,12 +554,10 @@
 
   function renderFertig() {
     const f = state.fertig;
-    const titel = f.art === 'abmeldung' ? `Auf Wiedersehen, ${escapeHtml(f.name)}!` : `Danke, ${escapeHtml(f.name)}!`;
-    const text = f.art === 'abmeldung'
-      ? 'Ihre Abmeldung wurde erfasst.'
-      : (f.rolle === 'besucher' ? 'Ihre Anmeldung wurde übermittelt.' : 'Ihre Anmeldung wurde erfasst.');
+    const titel = f.art === 'abmeldung' ? t('fertig_abmeldung_titel', { name: escapeHtml(f.name) }) : t('fertig_anmeldung_titel', { name: escapeHtml(f.name) });
+    const text = f.art === 'abmeldung' ? t('fertig_abmeldung_text') : (f.rolle === 'besucher' ? t('fertig_besucher_text') : t('fertig_handwerker_text'));
     cardShell(`<div class="confirm"><div class="stamp">✓</div><h2 class="display">${titel}</h2><p>${text}</p></div>`);
-    setTimeout(() => { state = leererState(); render(); }, 4000);
+    setTimeout(() => { const sprache = state.sprache; state = leererState(); state.sprache = sprache; render(); }, 4000);
   }
 
   function escapeHtml(str) {

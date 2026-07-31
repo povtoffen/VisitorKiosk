@@ -180,12 +180,14 @@ app.post('/api/besucher', kioskLimiter, requireKioskKey, (req, res) => {
 });
 
 app.get('/api/besucher', requireAdminSession, (req, res) => {
-  const { offen } = req.query;
+  const { offen, von, bis } = req.query;
   const standort = req.admin.standort || req.query.standort;
   const clauses = [];
   const params = [];
   if (offen === 'true') clauses.push('abgemeldet_um IS NULL');
   if (standort) { clauses.push('standort = ?'); params.push(standort); }
+  if (von) { clauses.push('angemeldet_um >= ?'); params.push(von); }
+  if (bis) { clauses.push('angemeldet_um <= ?'); params.push(bis + 'T23:59:59'); }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   res.json(db.prepare(`SELECT * FROM besucher ${where} ORDER BY angemeldet_um DESC LIMIT 500`).all(...params));
 });
@@ -262,12 +264,14 @@ app.post('/api/handwerker', kioskLimiter, requireKioskKey, (req, res) => {
 });
 
 app.get('/api/handwerker', requireAdminSession, (req, res) => {
-  const { offen } = req.query;
+  const { offen, von, bis } = req.query;
   const standort = req.admin.standort || req.query.standort;
   const clauses = [];
   const params = [];
   if (offen === 'true') clauses.push('abgemeldet_um IS NULL');
   if (standort) { clauses.push('standort = ?'); params.push(standort); }
+  if (von) { clauses.push('angemeldet_um >= ?'); params.push(von); }
+  if (bis) { clauses.push('angemeldet_um <= ?'); params.push(bis + 'T23:59:59'); }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   res.json(db.prepare(`SELECT * FROM handwerker ${where} ORDER BY angemeldet_um DESC LIMIT 500`).all(...params));
 });
@@ -319,12 +323,29 @@ app.patch('/api/handwerker/:id/abmelden', requireAdminSession, (req, res) => {
 
 // --- Selbst-Abmeldung am Kiosk (Besucher + Handwerker zusammen) -----------------
 
-app.get('/api/checkins/offene-liste', kioskReadLimiter, requireKioskKey, (req, res) => {
-  const { standort } = req.query;
+// Bewusst eine Suche statt einer Voll-Liste: liefert erst ab 2 Zeichen und nur
+// wenige Treffer, damit am Kiosk niemand die komplette Anwesenheitsliste
+// einsehen kann (auch nicht über direkte API-Aufrufe mit dem Kiosk-Key).
+app.get('/api/checkins/suche', kioskReadLimiter, requireKioskKey, (req, res) => {
+  const { standort, q } = req.query;
   if (!validStandort(standort)) return res.status(400).json({ error: 'Unbekannter oder fehlender Standort.' });
-  const besucherRows = db.prepare('SELECT id, name, firma, angemeldet_um FROM besucher WHERE standort = ? AND abgemeldet_um IS NULL').all(standort).map(r => ({ ...r, typ: 'besucher' }));
-  const handwerkerRows = db.prepare('SELECT id, name, firma, schluessel, angemeldet_um FROM handwerker WHERE standort = ? AND abgemeldet_um IS NULL').all(standort).map(r => ({ ...r, typ: 'handwerker' }));
-  const alle = [...besucherRows, ...handwerkerRows].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  const suchbegriff = (q || '').trim();
+  if (suchbegriff.length < 2) return res.json([]);
+  const muster = '%' + suchbegriff.replace(/[%_\\]/g, '\\$&') + '%';
+
+  const besucherRows = db.prepare(`
+    SELECT id, name, firma, angemeldet_um FROM besucher
+    WHERE standort = ? AND abgemeldet_um IS NULL AND (LOWER(name) LIKE LOWER(?) ESCAPE '\\' OR LOWER(firma) LIKE LOWER(?) ESCAPE '\\')
+    LIMIT 8
+  `).all(standort, muster, muster).map(r => ({ ...r, typ: 'besucher' }));
+
+  const handwerkerRows = db.prepare(`
+    SELECT id, name, firma, schluessel, angemeldet_um FROM handwerker
+    WHERE standort = ? AND abgemeldet_um IS NULL AND (LOWER(name) LIKE LOWER(?) ESCAPE '\\' OR LOWER(firma) LIKE LOWER(?) ESCAPE '\\')
+    LIMIT 8
+  `).all(standort, muster, muster).map(r => ({ ...r, typ: 'handwerker' }));
+
+  const alle = [...besucherRows, ...handwerkerRows].sort((a, b) => a.name.localeCompare(b.name, 'de')).slice(0, 8);
   res.json(alle);
 });
 
@@ -364,6 +385,8 @@ app.get('/api/schluessel', requireAdminSession, (req, res) => {
   const clauses = [];
   const params = [];
   if (standort) { clauses.push('standort = ?'); params.push(standort); }
+  if (req.query.von) { clauses.push('zeitpunkt >= ?'); params.push(req.query.von); }
+  if (req.query.bis) { clauses.push('zeitpunkt <= ?'); params.push(req.query.bis + 'T23:59:59'); }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   res.json(db.prepare(`SELECT * FROM schluessel ${where} ORDER BY zeitpunkt DESC LIMIT 500`).all(...params));
 });
@@ -693,7 +716,7 @@ app.get('/', (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!standort) return res.redirect(302, '/admin');
   const hintergrundUrl = standort.hintergrund_dateiname ? `/uploads/${standort.hintergrund_dateiname}` : '';
-  const willkommenstext = (standort.willkommenstext || 'Willkommen!').replace(/"/g, '\\"');
+  const willkommenstext = (standort.willkommenstext || '').replace(/"/g, '\\"');
   const html = fs.readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8')
     .replace('__KIOSK_API_KEY__', KIOSK_API_KEY)
     .replace('__STANDORT__', standort.name.replace(/"/g, '\\"'))

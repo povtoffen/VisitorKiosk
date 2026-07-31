@@ -6,9 +6,10 @@ Node.js/Express-Backend mit SQLite. Ein einziger Container liefert alles aus:
 - **`/`** — Kiosk-Assistent, fest an einen Standort gebunden. Auf einem
   Hostnamen, dem kein Standort zugeordnet ist (z. B. eure Haupt-App-URL aus
   Coolify), leitet `/` automatisch auf `/admin` weiter.
-- **`/admin`** — Dashboard mit Benutzer/Passwort-Login. Jeder Zugang sieht
-  Besucher/Handwerker/Schlüssel-Log/Export für seinen Standort. Ein
-  **Superadmin**-Zugang (kein Standort zugewiesen) sieht zusätzlich die
+- **`/admin`** — Dashboard mit Benutzer/Passwort-Login und linker Sidebar
+  (Gruppen „Betrieb" und, für Superadmins, „Zentrale Verwaltung"). Jeder
+  Zugang sieht Besucher/Handwerker/Schlüssel-Log/Export für seinen Standort.
+  Ein **Superadmin**-Zugang (kein Standort zugewiesen) sieht zusätzlich die
   zentrale Verwaltung: Standorte, Domains, Nutzer, Kunden, Aktivitätsprotokoll.
 - **`/api/*`** — REST-API
 
@@ -21,6 +22,19 @@ Kiosk nicht wechselbar**, sondern wird serverseitig über den aufgerufenen
 Hostnamen fest zugeordnet. Optional lässt sich pro Standort ein
 Hintergrundbild und ein individueller Willkommenstext hinterlegen (Dashboard
 → Tab „Standorte").
+
+- **Zweisprachig**: DE/EN-Umschalter oben rechts auf jedem Bildschirm, wird
+  bei jedem neuen Vorgang wieder auf Deutsch zurückgesetzt (kein
+  Geräte-übergreifendes Merken einer Sprache — jeder Besucher startet neutral).
+  Ein individuell gesetzter Willkommenstext wird nicht automatisch übersetzt.
+- **Abmeldung per Suche statt Liste**: Wer sich abmelden möchte, tippt seinen
+  Namen — es werden nie alle aktuell Anwesenden aufgelistet. Das verhindert,
+  dass am Kiosk einsehbar ist, wer gerade im Haus ist. Die Suche läuft
+  server-seitig (max. 8 Treffer, erst ab 2 Zeichen); der Kiosk selbst hält nie
+  die volle Anwesenheitsliste im Speicher oder in der Netzwerk-Antwort.
+- Eingabefelder senden bei Enter nicht mehr versehentlich das Formular ab
+  (das hätte vorher den gesamten Assistenten zurückgesetzt) — Enter verhält
+  sich jetzt wie ein Klick auf „Weiter".
 
 ## Alles wird jetzt über das Dashboard verwaltet
 
@@ -66,6 +80,11 @@ migriert — bestehende Passwörter bleiben dabei erhalten.
 Jeder eingeloggte Zugang (auch standortgebunden) kann außerdem im Tab
 „Export" die Schlüssel-Historie seines Standorts als CSV herunterladen oder
 direkt per E-Mail an eine hinterlegte oder eingetippte Adresse senden.
+
+**Vergangene Besuche einsehen:** In den Tabs „Besucher", „Handwerker" und
+„Schlüssel-Log" das Häkchen „nur anwesende" / „nur offene Schlüssel"
+entfernen — dann erscheint der komplette Verlauf (inkl. bereits Abgemeldeter),
+zusätzlich nach Zeitraum (von/bis) filterbar.
 
 ## Mehrere Standorte über Subdomains
 

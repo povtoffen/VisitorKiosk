@@ -13,11 +13,11 @@
     --ink: #1B2430; --paper: #F4F0E6; --paper-2: #EAE3D3;
     --amber: #D98E3D; --amber-deep: #B9701F; --teal: #3E7075; --teal-deep: #2C5257;
     --line: #D8CFB8; --danger: #B3492F; --ok: #4C7A4C;
-    font-family: 'Inter', sans-serif; min-height: 100vh; background: var(--ink); color: var(--paper); padding: 32px 20px;
+    font-family: 'Inter', sans-serif; min-height: 100vh; background: var(--ink); color: var(--paper);
+    display: flex;
   }
   #app .display { font-family: 'Space Grotesk', sans-serif; }
-  #app .wrap { max-width: 1100px; margin: 0 auto; }
-  #app h1 { font-size: 24px; margin: 0 0 4px 0; }
+  #app h1 { font-size: 22px; margin: 0 0 18px 0; }
   #app h3 { font-size: 15px; margin: 0 0 10px 0; }
   #app .eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #9AA3AE; margin: 0 0 4px 0; font-weight: 600; }
 
@@ -35,14 +35,31 @@
   #app .error { color: var(--danger); font-size: 13px; min-height: 16px; margin: 4px 0; }
   #app .ok-msg { color: var(--ok); font-size: 13px; min-height: 16px; margin: 4px 0; }
 
-  #app .tabgruppe { margin: 20px 0 6px 0; }
-  #app .tabgruppe-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #6E7987; margin-bottom: 6px; }
-  #app .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  #app .tabs button { padding: 9px 14px; border-radius: 9px; border: 1.5px solid #38414D; background: transparent;
-    color: var(--paper); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-  #app .tabs button[data-active="true"] { background: var(--teal); border-color: var(--teal); }
+  /* --- Sidebar --- */
+  #app .sidebar { width: 240px; flex-shrink: 0; background: #161D27; padding: 22px 14px; display: flex; flex-direction: column; min-height: 100vh; }
+  #app .sidebar-header { padding: 4px 8px 18px 8px; border-bottom: 1px solid #2A333F; margin-bottom: 14px; }
+  #app .sidebar-header .wer { font-weight: 700; font-size: 14px; margin-top: 2px; }
+  #app .sidebar-header .wo { font-size: 12px; color: #9AA3AE; margin-top: 2px; }
+  #app .sidebar-gruppe { margin-bottom: 6px; }
+  #app .sidebar-gruppe-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #6E7987; padding: 10px 8px 6px 8px; }
+  #app .sidebar-link { display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px; border: none;
+    background: transparent; color: #C7CDD5; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 2px; }
+  #app .sidebar-link:hover { background: #202938; }
+  #app .sidebar-link[data-active="true"] { background: var(--teal); color: #fff; }
+  #app .sidebar-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid #2A333F; display: flex; flex-direction: column; }
+  #app .main { flex: 1; padding: 30px 32px; min-width: 0; }
 
-  #app .toolbar { display: flex; align-items: center; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  @media (max-width: 860px) {
+    #app { flex-direction: column; }
+    #app .sidebar { width: 100%; min-height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; }
+    #app .sidebar-header, #app .sidebar-footer { display: none; }
+    #app .sidebar-gruppe { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 0; }
+    #app .sidebar-gruppe-label { display: none; }
+    #app .main { padding: 20px; }
+  }
+
+  #app .tabgruppe-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #6E7987; margin-bottom: 6px; }
+  #app .toolbar { display: flex; align-items: center; gap: 10px; margin: 0 0 14px 0; flex-wrap: wrap; }
   #app .toolbar label { font-size: 13px; color: #C7CDD5; display: flex; align-items: center; gap: 6px; }
   #app .toolbar select, #app .toolbar input { background: #232D3A; color: var(--paper); border: 1.5px solid #38414D; }
   #app .standort-label { font-size: 13px; color: #C7CDD5; background: #232D3A; padding: 6px 12px; border-radius: 7px; }
@@ -95,10 +112,12 @@
     { id: 'kunden', label: 'Kunden' },
     { id: 'aktivitaet', label: 'Aktivität' }
   ];
+  const ALLE_TABS = [...OPERATIVE_TABS, ...VERWALTUNG_TABS];
 
   const state = {
     admin: null, checkingSession: true,
     tab: 'besucher', onlyOpen: true, standort: '', standorte: [],
+    von: '', bis: '',
     rows: [], loading: false, error: '', okMsg: '',
     editingId: null, editDraft: {},
     firmen: [], exportFirma: '', exportVon: '', exportBis: '', smtpKonfiguriert: false, exportBusy: false, exportMsg: '',
@@ -106,7 +125,7 @@
   };
 
   function render() {
-    if (state.checkingSession) { app.innerHTML = `<div class="empty" style="margin-top:80px">Lädt…</div>`; return; }
+    if (state.checkingSession) { app.innerHTML = `<div class="empty" style="margin:80px auto;max-width:300px">Lädt…</div>`; return; }
     if (!state.admin) { renderLogin(); return; }
     renderDashboard();
   }
@@ -168,44 +187,50 @@
     render();
   }
 
-  function istSuperadmin() { return !state.admin.standort_id; }
-
-  function renderDashboard() {
-    app.innerHTML = `
-      <div class="wrap">
-        <p class="eyebrow">Dashboard — angemeldet als ${escapeHtml(state.admin.username)}${istSuperadmin() ? ' (Superadmin)' : ''}</p>
-        <h1 class="display">Besucher &amp; Schlüssel</h1>
-
-        <div class="tabgruppe">
-          <div class="tabgruppe-label">Betrieb</div>
-          <div class="tabs" id="tabs-operativ">${OPERATIVE_TABS.map(t => `<button data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}
-            <button style="margin-left:auto;background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="passwort-btn">Mein Passwort ändern</button>
-            <button style="background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="logout-btn">Abmelden</button>
-          </div>
-        </div>
-        ${istSuperadmin() ? `
-        <div class="tabgruppe">
-          <div class="tabgruppe-label">Zentrale Verwaltung</div>
-          <div class="tabs" id="tabs-verwaltung">${VERWALTUNG_TABS.map(t => `<button data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}</div>
-        </div>` : ''}
-
-        <div id="tab-content"></div>
-      </div>
-    `;
-    app.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
-      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; state.editingId = null; state.error = ''; state.okMsg = ''; render(); loadTabData(); });
-    });
-    app.querySelector('#logout-btn').addEventListener('click', logout);
-    app.querySelector('#passwort-btn').addEventListener('click', eigenesPasswortAendern);
-    renderTabContent();
-  }
-
   async function eigenesPasswortAendern() {
     const neu = prompt('Neues Passwort (mind. 8 Zeichen):');
     if (!neu) return;
     const res = await fetch('/api/admin/passwort', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ neuesPasswort: neu }) });
     const b = await res.json().catch(() => ({}));
     alert(res.ok ? 'Passwort wurde geändert.' : (b.error || 'Fehler beim Ändern.'));
+  }
+
+  function istSuperadmin() { return !state.admin.standort_id; }
+
+  function renderDashboard() {
+    const tabTitel = (ALLE_TABS.find(t => t.id === state.tab) || {}).label || '';
+    app.innerHTML = `
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <p class="eyebrow">Dashboard</p>
+          <div class="wer">${escapeHtml(state.admin.username)}</div>
+          <div class="wo">${istSuperadmin() ? 'Superadmin — alle Standorte' : escapeHtml(state.admin.standort)}</div>
+        </div>
+        <div class="sidebar-gruppe">
+          <div class="sidebar-gruppe-label">Betrieb</div>
+          ${OPERATIVE_TABS.map(t => `<button class="sidebar-link" data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}
+        </div>
+        ${istSuperadmin() ? `
+        <div class="sidebar-gruppe">
+          <div class="sidebar-gruppe-label">Zentrale Verwaltung</div>
+          ${VERWALTUNG_TABS.map(t => `<button class="sidebar-link" data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}
+        </div>` : ''}
+        <div class="sidebar-footer">
+          <button class="sidebar-link" id="passwort-btn">Mein Passwort ändern</button>
+          <button class="sidebar-link" id="logout-btn">Abmelden</button>
+        </div>
+      </div>
+      <div class="main">
+        <h1 class="display">${escapeHtml(tabTitel)}</h1>
+        <div id="tab-content"></div>
+      </div>
+    `;
+    app.querySelectorAll('.sidebar-link[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; state.editingId = null; state.error = ''; state.okMsg = ''; render(); loadTabData(); });
+    });
+    app.querySelector('#logout-btn').addEventListener('click', logout);
+    app.querySelector('#passwort-btn').addEventListener('click', eigenesPasswortAendern);
+    renderTabContent();
   }
 
   function loadTabData() {
@@ -230,7 +255,7 @@
     if (state.tab === 'aktivitaet') return renderAktivitaetTab(c);
   }
 
-  // ===== Betrieb: Besucher / Handwerker / Schlüssel-Log =====================
+  // ===== Betrieb: Besucher / Handwerker / Schlüssel-Log (inkl. Verlauf) =====
 
   async function loadListe() {
     state.loading = true; state.editingId = null;
@@ -239,6 +264,8 @@
     const params = new URLSearchParams();
     if (state.onlyOpen) params.set('offen', 'true');
     if (istSuperadmin() && state.standort) params.set('standort', state.standort);
+    if (!state.onlyOpen && state.von) params.set('von', state.von);
+    if (!state.onlyOpen && state.bis) params.set('bis', state.bis);
     try {
       const res = await fetch(`${endpoint}?${params.toString()}`);
       if (res.status === 401) { state.admin = null; render(); return; }
@@ -256,17 +283,27 @@
   }
 
   function renderOperativTab(container) {
+    const nurOffenLabel = state.tab === 'schluessel' ? 'nur offene Schlüssel' : 'nur anwesende';
     container.innerHTML = `
       <div class="toolbar">
-        <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'schluessel' ? 'nur offene Schlüssel' : 'nur anwesende'}</label>
+        <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${nurOffenLabel}</label>
         ${standortFilterHtml()}
+        ${!state.onlyOpen ? `
+          <label>von <input type="date" id="verlauf-von" value="${escapeAttr(state.von)}" /></label>
+          <label>bis <input type="date" id="verlauf-bis" value="${escapeAttr(state.bis)}" /></label>
+        ` : ''}
         <button class="refresh" id="refresh-btn">Aktualisieren</button>
       </div>
+      ${!state.onlyOpen ? '<p class="hinweis" style="margin:-8px 0 14px 0">Verlauf vergangener Einträge — Häkchen oben setzen, um nur aktuell Anwesende zu sehen.</p>' : ''}
       <div id="table-container"></div>
     `;
     container.querySelector('#only-open').addEventListener('change', e => { state.onlyOpen = e.target.checked; loadListe(); });
     const sf = container.querySelector('#standort-filter');
     if (sf) sf.addEventListener('change', e => { state.standort = e.target.value; loadListe(); });
+    const vonEl = container.querySelector('#verlauf-von');
+    if (vonEl) vonEl.addEventListener('change', e => { state.von = e.target.value; loadListe(); });
+    const bisEl = container.querySelector('#verlauf-bis');
+    if (bisEl) bisEl.addEventListener('change', e => { state.bis = e.target.value; loadListe(); });
     container.querySelector('#refresh-btn').addEventListener('click', loadListe);
     renderListeTabelle();
   }
