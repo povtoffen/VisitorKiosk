@@ -23,6 +23,11 @@ Installation an mehreren Standorten nutzen:
 
 Ist `STANDORTE` nicht gesetzt, gibt es einen einzelnen Standort ("Standort").
 
+Falls die Datenbank aus einer früheren Version ohne Standort-Feld stammt,
+wird die Spalte beim Start automatisch nachgerüstet (bestehende Einträge
+erhalten den Platzhalter-Standort "Unbekannt"). Kein manueller Eingriff
+nötig, ein Redeploy reicht.
+
 ## Schlüssel-Rückgabe nur für tatsächlich ausgegebene Schlüssel
 
 - Beim Anlegen einer Rückgabe zeigt das Kiosk-Formular nur Schlüssel zur
