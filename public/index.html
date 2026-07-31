@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Empfang — Besucheranmeldung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  #kiosk-root, #kiosk-root * { box-sizing: border-box; }
+  #kiosk-root {
+    --ink: #1B2430;
+    --paper: #F4F0E6;
+    --paper-2: #EAE3D3;
+    --amber: #D98E3D;
+    --amber-deep: #B9701F;
+    --teal: #3E7075;
+    --teal-deep: #2C5257;
+    --line: #D8CFB8;
+    --danger: #B3492F;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(217,142,61,0.10), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(62,112,117,0.14), transparent 45%);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  #kiosk-root .display { font-family: 'Space Grotesk', sans-serif; }
+
+  #kiosk-root .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--paper);
+    border-radius: 18px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+  #kiosk-root .top { padding: 28px 28px 0 28px; }
+  #kiosk-root .eyebrow {
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #7A7263; margin: 0 0 4px 0; font-weight: 600;
+  }
+  #kiosk-root h1 { font-size: 26px; margin: 0 0 20px 0; letter-spacing: -0.01em; }
+  #kiosk-root .toggle { display: flex; gap: 8px; padding: 0 28px; margin-bottom: 22px; }
+  #kiosk-root .toggle button {
+    flex: 1; padding: 14px 10px; border-radius: 12px; border: 2px solid var(--line);
+    background: transparent; font-family: inherit; font-size: 15px; font-weight: 600;
+    cursor: pointer; color: #6B6355; transition: all 0.15s ease;
+  }
+  #kiosk-root .toggle button[data-active="true"][data-mode="besucher"] {
+    background: var(--amber); border-color: var(--amber); color: #2A1C0B;
+  }
+  #kiosk-root .toggle button[data-active="true"][data-mode="handwerker"] {
+    background: var(--teal); border-color: var(--teal); color: #EAF4F4;
+  }
+  #kiosk-root .badge-preview {
+    margin: 0 28px 22px 28px; border-radius: 12px; padding: 16px 18px;
+    background: var(--paper-2); border: 1px dashed var(--line);
+    display: flex; align-items: center; gap: 14px; transition: border-color 0.2s ease;
+  }
+  #kiosk-root .badge-preview .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--amber-deep); flex-shrink: 0; }
+  #kiosk-root[data-mode="handwerker"] .badge-preview .dot { background: var(--teal-deep); }
+  #kiosk-root .badge-preview .name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; line-height: 1.2; }
+  #kiosk-root .badge-preview .sub { font-size: 12px; color: #8A8272; }
+  #kiosk-root form { padding: 0 28px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+  #kiosk-root label { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: #5C5647; display: block; margin-bottom: 6px; }
+  #kiosk-root input, #kiosk-root select, #kiosk-root textarea {
+    width: 100%; padding: 12px 13px; border-radius: 9px; border: 1.5px solid var(--line);
+    background: #FFFFFF; font-family: inherit; font-size: 15px; color: var(--ink);
+  }
+  #kiosk-root input:focus, #kiosk-root select:focus { outline: none; border-color: var(--amber-deep); }
+  #kiosk-root[data-mode="handwerker"] input:focus { border-color: var(--teal-deep); }
+  #kiosk-root .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  #kiosk-root .segmented { display: flex; background: var(--paper-2); border-radius: 9px; padding: 4px; gap: 4px; border: 1.5px solid var(--line); }
+  #kiosk-root .segmented button {
+    flex: 1; border: none; background: transparent; padding: 10px 6px; border-radius: 6px;
+    font-family: inherit; font-size: 13px; font-weight: 600; color: #6B6355; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  #kiosk-root .segmented button[data-active="true"] { background: var(--teal); color: #EAF4F4; }
+  #kiosk-root .submit {
+    margin-top: 6px; padding: 15px; border-radius: 10px; border: none; font-family: inherit;
+    font-size: 16px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber);
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+  #kiosk-root .submit:active { transform: scale(0.98); }
+  #kiosk-root[data-mode="handwerker"] .submit { color: #EAF4F4; background: var(--teal); }
+  #kiosk-root .submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  #kiosk-root .error { color: var(--danger); font-size: 13px; margin: -4px 0 0 0; min-height: 16px; }
+  #kiosk-root .confirm { padding: 60px 28px 56px 28px; text-align: center; }
+  #kiosk-root .confirm .stamp {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--amber);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto;
+    font-size: 30px; color: #2A1C0B;
+  }
+  #kiosk-root[data-mode="handwerker"] .confirm .stamp { background: var(--teal); color: #EAF4F4; }
+  #kiosk-root .confirm h2 { font-size: 21px; margin: 0 0 6px 0; }
+  #kiosk-root .confirm p { font-size: 14px; color: #7A7263; margin: 0; }
+</style>
+</head>
+<body>
+<div id="kiosk-root"></div>
+
+<!-- KIOSK_API_KEY wird beim Ausliefern der Seite serverseitig aus der Umgebungsvariable eingesetzt -->
+<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__" };</script>
+
+<script>
+(function() {
+  const root = document.getElementById('kiosk-root');
+  root.dataset.mode = 'besucher';
+  const state = { mode: 'besucher', richtung: 'ausgabe' };
+
+  function render() {
+    root.innerHTML = `
+      <div class="card">
+        <div class="top">
+          <p class="eyebrow">Empfang</p>
+          <h1 class="display">${state.mode === 'besucher' ? 'Willkommen — bitte anmelden' : 'Schlüsselausgabe für Handwerker'}</h1>
+        </div>
+        <div class="toggle">
+          <button type="button" data-mode="besucher" data-active="${state.mode === 'besucher'}">Ich bin Besucher</button>
+          <button type="button" data-mode="handwerker" data-active="${state.mode === 'handwerker'}">Ich bin Handwerker</button>
+        </div>
+        <div class="badge-preview">
+          <div class="dot"></div>
+          <div>
+            <div class="name" id="preview-name">${state.mode === 'besucher' ? 'Ihr Name erscheint hier' : 'Name des Handwerkers'}</div>
+            <div class="sub" id="preview-sub">${state.mode === 'besucher' ? 'Besucherausweis' : 'Schlüsselvorgang'}</div>
+          </div>
+        </div>
+        <form id="kiosk-form" novalidate>
+          ${state.mode === 'besucher' ? besucherFields() : handwerkerFields()}
+          <p class="error" id="form-error"></p>
+          <button type="submit" class="submit">${state.mode === 'besucher' ? 'Anmeldung abschicken' : 'Vorgang bestätigen'}</button>
+        </form>
+      </div>
+    `;
+    bind();
+  }
+
+  function besucherFields() {
+    return `
+      <div>
+        <label for="f-name">Vor- und Nachname</label>
+        <input id="f-name" name="name" placeholder="Max Mustermann" autocomplete="off" />
+      </div>
+      <div>
+        <label for="f-firma">Firma (optional)</label>
+        <input id="f-firma" name="firma" placeholder="Firma GmbH" autocomplete="off" />
+      </div>
+      <div>
+        <label for="f-ansprechpartner">Wen möchten Sie besuchen?</label>
+        <input id="f-ansprechpartner" name="ansprechpartner" placeholder="Name der Ansprechperson" autocomplete="off" />
+      </div>
+      <div>
+        <label for="f-grund">Grund des Besuchs</label>
+        <input id="f-grund" name="grund" placeholder="z. B. Meeting, Lieferung" autocomplete="off" />
+      </div>
+    `;
+  }
+
+  function handwerkerFields() {
+    return `
+      <div>
+        <label>Vorgang</label>
+        <div class="segmented" id="richtung-segmented">
+          <input type="hidden" name="richtung" id="f-richtung" value="${state.richtung}" />
+          <button type="button" data-richtung="ausgabe" data-active="${state.richtung === 'ausgabe'}">Schlüssel abholen</button>
+          <button type="button" data-richtung="rueckgabe" data-active="${state.richtung === 'rueckgabe'}">Schlüssel zurückgeben</button>
+        </div>
+      </div>
+      <div>
+        <label for="f-schluessel">Schlüssel / Objekt</label>
+        <input id="f-schluessel" name="schluessel" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" />
+      </div>
+      <div>
+        <label for="f-name">Name des Handwerkers</label>
+        <input id="f-name" name="name" placeholder="Vor- und Nachname" autocomplete="off" />
+      </div>
+      <div>
+        <label for="f-firma">Firma</label>
+        <input id="f-firma" name="firma" placeholder="Firma GmbH" autocomplete="off" />
+      </div>
+    `;
+  }
+
+  function bind() {
+    root.querySelectorAll('.toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        root.dataset.mode = state.mode;
+        render();
+      });
+    });
+
+    const nameInput = root.querySelector('#f-name');
+    if (nameInput) {
+      nameInput.addEventListener('input', () => {
+        const preview = root.querySelector('#preview-name');
+        preview.textContent = nameInput.value.trim() || (state.mode === 'besucher' ? 'Ihr Name erscheint hier' : 'Name des Handwerkers');
+      });
+    }
+
+    root.querySelectorAll('#richtung-segmented button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.richtung = btn.dataset.richtung;
+        root.querySelector('#f-richtung').value = state.richtung;
+        root.querySelectorAll('#richtung-segmented button').forEach(b => {
+          b.dataset.active = (b.dataset.richtung === state.richtung).toString();
+        });
+        const sub = root.querySelector('#preview-sub');
+        sub.textContent = state.richtung === 'ausgabe' ? 'Schlüssel wird ausgegeben' : 'Schlüssel wird zurückgegeben';
+      });
+    });
+
+    root.querySelector('#kiosk-form').addEventListener('submit', onSubmit);
+  }
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    const errorEl = root.querySelector('#form-error');
+    errorEl.textContent = '';
+    const data = Object.fromEntries(new FormData(e.target).entries());
+
+    if (!data.name || !data.name.trim()) {
+      errorEl.textContent = 'Bitte Namen eingeben.';
+      return;
+    }
+    if (state.mode === 'besucher' && (!data.ansprechpartner || !data.ansprechpartner.trim())) {
+      errorEl.textContent = 'Bitte angeben, wen Sie besuchen möchten.';
+      return;
+    }
+    if (state.mode === 'handwerker' && (!data.schluessel || !data.schluessel.trim())) {
+      errorEl.textContent = 'Bitte Schlüssel bzw. Objekt angeben.';
+      return;
+    }
+
+    const form = e.target;
+    const submitBtn = form.querySelector('.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Wird gespeichert…';
+
+    const endpoint = state.mode === 'besucher' ? '/api/besucher' : '/api/schluessel';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': window.KIOSK_CONFIG.apiKey
+        },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Anfrage fehlgeschlagen');
+    } catch (err) {
+      errorEl.textContent = 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = state.mode === 'besucher' ? 'Anmeldung abschicken' : 'Vorgang bestätigen';
+      return;
+    }
+
+    showConfirmation(data);
+  }
+
+  function showConfirmation(entry) {
+    const card = root.querySelector('.card');
+    card.innerHTML = `
+      <div class="confirm">
+        <div class="stamp">✓</div>
+        <h2 class="display">${state.mode === 'besucher' ? 'Danke, ' + escapeHtml(entry.name) + '!' : 'Vorgang erfasst'}</h2>
+        <p>${state.mode === 'besucher' ? 'Ihre Anmeldung wurde übermittelt.' : (entry.richtung === 'ausgabe' ? 'Schlüsselausgabe wurde erfasst.' : 'Schlüsselrückgabe wurde erfasst.')}</p>
+      </div>
+    `;
+    setTimeout(() => {
+      state.richtung = 'ausgabe';
+      render();
+    }, 4000);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

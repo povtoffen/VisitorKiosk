@@ -1,0 +1,17 @@
+services:
+  besucher-schluessel:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      KIOSK_API_KEY: ${KIOSK_API_KEY}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      DB_PATH: /app/data/data.db
+    volumes:
+      - besucher-data:/app/data
+
+volumes:
+  besucher-data:
