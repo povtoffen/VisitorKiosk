@@ -10,6 +10,15 @@ const path = require('path');
 const fs = require('fs');
 const { db, verifyPassword, hashPassword, DATA_DIR } = require('./db');
 
+// Prüft, dass db.js vollständig geladen wurde. Verhindert kryptische
+// Stacktraces (z. B. "path argument must be of type string") und zeigt
+// stattdessen sofort, welche Datei das Problem hat.
+if (typeof DATA_DIR !== 'string' || !db || typeof verifyPassword !== 'function' || typeof hashPassword !== 'function') {
+  console.error('[FATAL] db.js wurde geladen, liefert aber nicht die erwarteten Exporte (db, verifyPassword, hashPassword, DATA_DIR).');
+  console.error('[FATAL] Das deutet auf eine unvollständige oder beschädigte db.js hin — bitte den Dateiinhalt komplett neu ersetzen, nicht nur einzelne Zeilen.');
+  process.exit(1);
+}
+
 const PORT = process.env.PORT || 3000;
 const KIOSK_API_KEY = process.env.KIOSK_API_KEY || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || '';
