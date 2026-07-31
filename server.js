@@ -37,7 +37,7 @@ if (!smtpKonfiguriert) console.warn('[WARN] SMTP ist nicht konfiguriert — E-Ma
 
 const app = express();
 app.set('trust proxy', 1); // hinter Coolify/Traefik: X-Forwarded-* korrekt auswerten
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 app.use(cors({ origin: CORS_ORIGIN === '*' ? '*' : CORS_ORIGIN.split(','), credentials: true }));
 
@@ -239,9 +239,12 @@ function offenerSchluessel(standort, schluessel) {
 }
 
 app.post('/api/handwerker', kioskLimiter, requireKioskKey, (req, res) => {
-  const { standort, name, firma, schluessel } = req.body || {};
+  const { standort, name, firma, schluessel, unterschrift } = req.body || {};
   if (!validStandort(standort)) return res.status(400).json({ error: 'Unbekannter oder fehlender Standort.' });
   if (!name) return res.status(400).json({ error: 'name ist erforderlich.' });
+  if (unterschrift && (typeof unterschrift !== 'string' || !unterschrift.startsWith('data:image/png;base64,') || unterschrift.length > 800000)) {
+    return res.status(400).json({ error: 'Ungültige Unterschrift.' });
+  }
 
   const standortTrim = standort.trim();
   const schluesselTrim = schluessel?.trim() || null;
@@ -256,11 +259,20 @@ app.post('/api/handwerker', kioskLimiter, requireKioskKey, (req, res) => {
 
   if (schluesselTrim) {
     db.prepare(`
-      INSERT INTO schluessel (standort, handwerker_id, name, firma, schluessel, richtung, zeitpunkt)
-      VALUES (?, ?, ?, ?, ?, 'ausgabe', ?)
-    `).run(standortTrim, info.lastInsertRowid, name.trim(), firma?.trim() || null, schluesselTrim, angemeldet_um);
+      INSERT INTO schluessel (standort, handwerker_id, name, firma, schluessel, richtung, zeitpunkt, unterschrift_data_url)
+      VALUES (?, ?, ?, ?, ?, 'ausgabe', ?, ?)
+    `).run(standortTrim, info.lastInsertRowid, name.trim(), firma?.trim() || null, schluesselTrim, angemeldet_um, unterschrift || null);
   }
   res.status(201).json({ id: info.lastInsertRowid, angemeldet_um });
+});
+
+// Liefert dem Kiosk die für den Standort hinterlegten, auswählbaren Schlüssel.
+app.get('/api/schluessel-katalog', kioskReadLimiter, requireKioskKey, (req, res) => {
+  const { standort } = req.query;
+  if (!validStandort(standort)) return res.status(400).json({ error: 'Unbekannter oder fehlender Standort.' });
+  const standortRow = db.prepare('SELECT id FROM standorte WHERE name = ?').get(standort.trim());
+  if (!standortRow) return res.json([]);
+  res.json(db.prepare('SELECT name FROM schluessel_katalog WHERE standort_id = ? ORDER BY name').all(standortRow.id));
 });
 
 app.get('/api/handwerker', requireAdminSession, (req, res) => {
@@ -367,6 +379,9 @@ app.patch('/api/checkins/:typ/:id/abmelden', kioskLimiter, requireKioskKey, (req
 
 // --- Schlüssel-Log -----------------------------------------------------------------
 
+const SCHLUESSEL_LISTEN_SPALTEN = 'id, standort, handwerker_id, name, firma, schluessel, richtung, zeitpunkt, (unterschrift_data_url IS NOT NULL) AS hat_unterschrift';
+const SCHLUESSEL_LISTEN_SPALTEN_S = 's.id, s.standort, s.handwerker_id, s.name, s.firma, s.schluessel, s.richtung, s.zeitpunkt, (s.unterschrift_data_url IS NOT NULL) AS hat_unterschrift';
+
 app.get('/api/schluessel', requireAdminSession, (req, res) => {
   const { offen } = req.query;
   const standort = req.admin.standort || req.query.standort;
@@ -375,7 +390,7 @@ app.get('/api/schluessel', requireAdminSession, (req, res) => {
     const params = [];
     if (standort) { clauses.push('latest.standort = ?'); params.push(standort); }
     const rows = db.prepare(`
-      SELECT s.* FROM schluessel s
+      SELECT ${SCHLUESSEL_LISTEN_SPALTEN_S} FROM schluessel s
       INNER JOIN (SELECT standort, schluessel, MAX(id) AS max_id FROM schluessel GROUP BY standort, schluessel) latest
         ON latest.standort = s.standort AND latest.schluessel = s.schluessel AND latest.max_id = s.id
       WHERE ${clauses.join(' AND ')} ORDER BY s.zeitpunkt DESC
@@ -388,7 +403,14 @@ app.get('/api/schluessel', requireAdminSession, (req, res) => {
   if (req.query.von) { clauses.push('zeitpunkt >= ?'); params.push(req.query.von); }
   if (req.query.bis) { clauses.push('zeitpunkt <= ?'); params.push(req.query.bis + 'T23:59:59'); }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-  res.json(db.prepare(`SELECT * FROM schluessel ${where} ORDER BY zeitpunkt DESC LIMIT 500`).all(...params));
+  res.json(db.prepare(`SELECT ${SCHLUESSEL_LISTEN_SPALTEN} FROM schluessel ${where} ORDER BY zeitpunkt DESC LIMIT 500`).all(...params));
+});
+
+app.get('/api/schluessel/:id/unterschrift', requireAdminSession, (req, res) => {
+  const row = db.prepare('SELECT standort, unterschrift_data_url FROM schluessel WHERE id = ?').get(req.params.id);
+  if (!row || !row.unterschrift_data_url) return res.status(404).json({ error: 'Keine Unterschrift vorhanden.' });
+  if (!adminDarfZugreifen(req, row.standort)) return res.status(403).json({ error: 'Kein Zugriff auf diesen Standort.' });
+  res.json({ unterschrift: row.unterschrift_data_url });
 });
 
 app.patch('/api/schluessel/:id/zurueckgeben', requireAdminSession, (req, res) => {
@@ -524,6 +546,46 @@ app.delete('/api/dashboard/kunden/:id', requireAdminSession, requireSuperadmin, 
   if (!row) return res.status(404).json({ error: 'Nicht gefunden.' });
   db.prepare('DELETE FROM kunden WHERE id = ?').run(req.params.id);
   protokolliere(req.admin.username, 'kunde_geloescht', row.firma);
+  res.json({ ok: true });
+});
+
+// --- Schlüssel-Katalog (welche Schlüssel pro Standort ausgegeben werden können) ---
+// Anders als die zentrale Verwaltung: für jeden Admin nutzbar (auch standortgebunden),
+// da es sich um operative, standortspezifische Pflege handelt.
+
+app.get('/api/dashboard/schluessel-katalog', requireAdminSession, (req, res) => {
+  const standort = req.admin.standort || req.query.standort;
+  if (!standort) return res.json([]);
+  if (!adminDarfZugreifen(req, standort)) return res.status(403).json({ error: 'Kein Zugriff auf diesen Standort.' });
+  const standortRow = db.prepare('SELECT id FROM standorte WHERE name = ?').get(standort);
+  if (!standortRow) return res.json([]);
+  res.json(db.prepare('SELECT * FROM schluessel_katalog WHERE standort_id = ? ORDER BY name').all(standortRow.id));
+});
+
+app.post('/api/dashboard/schluessel-katalog', requireAdminSession, (req, res) => {
+  const standortName = req.admin.standort || req.body?.standort;
+  if (!standortName) return res.status(400).json({ error: 'Standort erforderlich.' });
+  if (!adminDarfZugreifen(req, standortName)) return res.status(403).json({ error: 'Kein Zugriff auf diesen Standort.' });
+  const standortRow = db.prepare('SELECT id FROM standorte WHERE name = ?').get(standortName);
+  if (!standortRow) return res.status(400).json({ error: 'Standort nicht gefunden.' });
+  const name = (req.body?.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Name erforderlich.' });
+  try {
+    const info = db.prepare('INSERT INTO schluessel_katalog (standort_id, name, erstellt_um) VALUES (?, ?, ?)')
+      .run(standortRow.id, name, new Date().toISOString());
+    protokolliere(req.admin.username, 'schluesselkatalog_erstellt', `${standortName} / ${name}`);
+    res.status(201).json({ id: info.lastInsertRowid });
+  } catch (e) { res.status(409).json({ error: 'Dieser Schlüssel ist für diesen Standort bereits hinterlegt.' }); }
+});
+
+app.delete('/api/dashboard/schluessel-katalog/:id', requireAdminSession, (req, res) => {
+  const row = db.prepare(`
+    SELECT sk.*, st.name AS standort_name FROM schluessel_katalog sk JOIN standorte st ON st.id = sk.standort_id WHERE sk.id = ?
+  `).get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Nicht gefunden.' });
+  if (!adminDarfZugreifen(req, row.standort_name)) return res.status(403).json({ error: 'Kein Zugriff auf diesen Standort.' });
+  db.prepare('DELETE FROM schluessel_katalog WHERE id = ?').run(req.params.id);
+  protokolliere(req.admin.username, 'schluesselkatalog_geloescht', `${row.standort_name} / ${row.name}`);
   res.json({ ok: true });
 });
 

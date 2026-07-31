@@ -1,0 +1,42 @@
+PORT=3000
+
+# Wird vom Kiosk-Terminal beim Anlegen/Abmelden von Einträgen mitgeschickt.
+# Nur ein grober Spam-/Bot-Schutz, da er im HTML des Kiosk-Terminals sichtbar ist (siehe README).
+KIOSK_API_KEY=bitte-aendern-kiosk
+
+# Geheimer Schlüssel zum Signieren der Admin-Login-Sessions. Lang & zufällig, z. B. via:
+#   openssl rand -hex 32
+SESSION_SECRET=bitte-aendern-session-secret
+
+# --- Nur für die allererste Einrichtung ------------------------------------
+# Diese drei Variablen werden nur EINMALIG gelesen, wenn die jeweilige Tabelle
+# in der Datenbank noch leer ist (erster Start / Neuanlage). Duplicate Werte
+# werden ignoriert. Danach läuft die gesamte Verwaltung über das Dashboard
+# unter /admin (Tabs "Standorte", "Domains", "Nutzer") — diese Variablen
+# können anschließend wieder aus Coolify entfernt werden, sie haben dann
+# keine Wirkung mehr.
+
+# Kommagetrennte Liste initialer Standorte.
+STANDORTE=Hauptgebäude
+
+# Optional: initiale Zuordnung Hostname -> Standort (Format host=Standort,host2=Standort2).
+# STANDORT_DOMAINS=hauptgebaeude.example.com=Hauptgebäude
+
+# Initialer Admin-Zugang: username:passwort:standort, mehrere getrennt mit ";".
+# Standort leer lassen => Superadmin (Zugriff auf das gesamte Dashboard).
+ADMIN_USERS=admin:bitte-aendern-1:
+
+# --- Laufender Betrieb -------------------------------------------------------
+
+# Kommagetrennte Liste erlaubter Origins, z. B. https://empfang.example.com
+CORS_ORIGIN=*
+
+# Optional: SMTP-Zugangsdaten für den E-Mail-Export an Kunden. Ohne diese
+# Werte funktioniert der CSV-Download weiterhin, nur der "Per E-Mail senden"-
+# Button im Dashboard bleibt deaktiviert.
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=

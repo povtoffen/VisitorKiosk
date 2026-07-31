@@ -81,6 +81,14 @@ db.exec(`
     aktion TEXT NOT NULL,
     detail TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS schluessel_katalog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    standort_id INTEGER NOT NULL REFERENCES standorte(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    erstellt_um TEXT NOT NULL,
+    UNIQUE(standort_id, name)
+  );
 `);
 
 // --- Migration: fehlende Spalten an bestehenden Installationen nachrüsten ---
@@ -96,6 +104,7 @@ function spalteHinzufuegenFallsFehlt(tabelle, spalte, definition) {
 spalteHinzufuegenFallsFehlt('besucher', 'standort', `TEXT NOT NULL DEFAULT 'Unbekannt'`);
 spalteHinzufuegenFallsFehlt('schluessel', 'standort', `TEXT NOT NULL DEFAULT 'Unbekannt'`);
 spalteHinzufuegenFallsFehlt('schluessel', 'handwerker_id', `INTEGER REFERENCES handwerker(id)`);
+spalteHinzufuegenFallsFehlt('schluessel', 'unterschrift_data_url', `TEXT`);
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_besucher_offen ON besucher (abgemeldet_um);

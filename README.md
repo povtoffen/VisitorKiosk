@@ -15,18 +15,33 @@ Node.js/Express-Backend mit SQLite. Ein einziger Container liefert alles aus:
 
 ## Der Kiosk-Ablauf
 
-Start-Bildschirm mit drei Buttons — **Ich bin Besucher** / **Ich bin
-Handwerker** (mit optionaler Schlüsselvergabe) / **Ich möchte mich
-abmelden** — jeweils als kurzer Multi-Step-Assistent. Der **Standort ist am
-Kiosk nicht wechselbar**, sondern wird serverseitig über den aufgerufenen
-Hostnamen fest zugeordnet. Optional lässt sich pro Standort ein
-Hintergrundbild und ein individueller Willkommenstext hinterlegen (Dashboard
-→ Tab „Standorte").
+Zuerst ein **Begrüßungsbildschirm** (Standortname, Willkommenstext, ein
+großer „Anmelden"-Button) — erst danach erscheinen die drei Rollen-Buttons:
+**Ich bin Besucher** / **Ich bin Handwerker** (mit optionaler
+Schlüsselvergabe inkl. Unterschrift) / **Ich möchte mich abmelden**, jeweils
+als kurzer Multi-Step-Assistent. Der **Standort ist am Kiosk nicht
+wechselbar**, sondern wird serverseitig über den aufgerufenen Hostnamen fest
+zugeordnet. Optional lässt sich pro Standort ein Hintergrundbild und ein
+individueller Willkommenstext hinterlegen (Dashboard → Tab „Standorte").
 
-- **Zweisprachig**: DE/EN-Umschalter oben rechts auf jedem Bildschirm, wird
-  bei jedem neuen Vorgang wieder auf Deutsch zurückgesetzt (kein
-  Geräte-übergreifendes Merken einer Sprache — jeder Besucher startet neutral).
-  Ein individuell gesetzter Willkommenstext wird nicht automatisch übersetzt.
+- **Zweisprachig**: Flaggen-Umschalter (🇩🇪/🇬🇧) oben links auf jedem
+  Bildschirm, komplette Übersetzung aller Texte. Setzt sich nach jedem
+  abgeschlossenen Vorgang wieder auf Deutsch zurück, damit der nächste
+  Besucher neutral startet. Ein individuell gesetzter Willkommenstext wird
+  nicht automatisch übersetzt. Der Kiosk-Bereich ist zusätzlich per
+  `translate="no"`/`notranslate` von der automatischen Browser-/Google-
+  Übersetzung ausgenommen — die ist die häufigste Ursache dafür, dass
+  einzelne Wörter (z. B. „Weiter"/"Next") scheinbar "hängen bleiben" und
+  nicht zur gewählten Sprache passen, weil der Browser sie zusätzlich zur
+  eigenen App-Übersetzung überschreibt.
+- **Schlüssel-Katalog statt Freitext**: Handwerker wählen den benötigten
+  Schlüssel aus einer vorab im Dashboard hinterlegten Liste (Tab
+  „Schlüssel-Katalog", pro Standort pflegbar) statt ihn frei einzutippen —
+  vermeidet Tippfehler und uneinheitliche Bezeichnungen.
+- **Unterschrift auf dem Tablet**: Wird ein Schlüssel ausgegeben, unterschreibt
+  der Handwerker direkt im Assistenten (Finger oder Stift, per Canvas). Die
+  Unterschrift wird beim jeweiligen Ausgabe-Eintrag im Schlüssel-Log
+  gespeichert und ist dort über „Unterschrift ansehen" abrufbar.
 - **Abmeldung per Suche statt Liste**: Wer sich abmelden möchte, tippt seinen
   Namen — es werden nie alle aktuell Anwesenden aufgelistet. Das verhindert,
   dass am Kiosk einsehbar ist, wer gerade im Haus ist. Die Suche läuft
@@ -200,3 +215,8 @@ docker-compose.yml  Für Coolify-Deployment mit persistentem Volume
 - Passwort-Reset-Self-Service für Nutzer selbst gibt es nicht (nur der
   Superadmin kann Passwörter anderer Nutzer setzen); jeder Nutzer kann aber
   im Dashboard über „Mein Passwort ändern" sein eigenes Passwort setzen.
+- Unterschriften werden als Base64-PNG direkt in der SQLite-Datenbank
+  gespeichert (nicht als Datei). Bei sehr hohem Volumen (mehrere tausend
+  Unterschriften) lohnt sich ggf. eine Umstellung auf Datei-Speicherung wie
+  bei den Kiosk-Hintergrundbildern — für den normalen Betrieb ist das nicht
+  nötig.
