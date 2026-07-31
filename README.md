@@ -7,6 +7,35 @@ SQLite-Datenbank. Ein einziger Container liefert beides aus:
 - `/admin` — geschützte Verwaltungsansicht (anwesende Besucher abmelden, offene Schlüssel einsehen)
 - `/api/*` — REST-API
 
+## Mehrere Standorte
+
+Über die Umgebungsvariable `STANDORTE` (kommagetrennt) lässt sich dieselbe
+Installation an mehreren Standorten nutzen:
+
+- Im Kiosk-Formular erscheint eine Standort-Auswahl. Das Terminal merkt sich
+  die letzte Auswahl im Browser (`localStorage`) — ein Gerät, das dauerhaft an
+  einem Standort steht, muss den Standort also nur einmal einstellen.
+- Jeder Besucher- und Schlüssel-Eintrag wird mit seinem Standort gespeichert.
+- Die Verwaltungsansicht (`/admin`) kann nach Standort filtern.
+- Schlüssel werden **pro Standort** getrackt: Ein Schlüssel "Raum 1" in
+  "Hauptgebäude" ist unabhängig von einem gleichnamigen Schlüssel in
+  "Lager Nord".
+
+Ist `STANDORTE` nicht gesetzt, gibt es einen einzelnen Standort ("Standort").
+
+## Schlüssel-Rückgabe nur für tatsächlich ausgegebene Schlüssel
+
+- Beim Anlegen einer Rückgabe zeigt das Kiosk-Formular nur Schlüssel zur
+  Auswahl an, die am gewählten Standort aktuell als ausgegeben erfasst sind
+  (Dropdown statt Freitext) — abgefragt über `GET /api/schluessel/offene-liste`.
+- Der Server validiert zusätzlich serverseitig: Eine Rückgabe wird abgelehnt,
+  wenn für diesen Schlüssel/Standort keine offene Ausgabe existiert. Eine
+  erneute Ausgabe wird abgelehnt, solange der Schlüssel noch als ausgegeben
+  gilt.
+- In der Verwaltung (`/admin`, Tab "Schlüssel", Filter "nur offene Schlüssel")
+  kann ein Schlüssel auch direkt per Klick auf "Zurückgeben" erfasst werden,
+  ohne dass der Handwerker noch einmal zum Kiosk-Terminal muss.
+
 ## Absicherung
 
 Es gibt zwei getrennte Keys, damit ein kompromittierter Kiosk-Key nicht auch
@@ -59,13 +88,18 @@ Verwaltung: `http://localhost:3000/admin`
 | Methode | Pfad | Auth | Zweck |
 |---|---|---|---|
 | GET | `/api/health` | — | Health-Check |
+| GET | `/api/standorte` | — | Konfigurierte Standort-Liste |
 | POST | `/api/besucher` | `KIOSK_API_KEY` | Neue Besucheranmeldung |
-| GET | `/api/besucher?offen=true` | `ADMIN_API_KEY` | Aktuell anwesende Besucher |
+| GET | `/api/besucher?offen=true&standort=` | `ADMIN_API_KEY` | Aktuell anwesende Besucher |
 | PATCH | `/api/besucher/:id/abmelden` | `ADMIN_API_KEY` | Besucher abmelden |
-| POST | `/api/schluessel` | `KIOSK_API_KEY` | Schlüsselvorgang (ausgabe/rueckgabe) |
-| GET | `/api/schluessel?offen=true` | `ADMIN_API_KEY` | Aktuell ausgegebene Schlüssel |
+| POST | `/api/schluessel` | `KIOSK_API_KEY` | Schlüsselvorgang (ausgabe/rueckgabe), serverseitig validiert |
+| GET | `/api/schluessel?offen=true&standort=` | `ADMIN_API_KEY` | Aktuell ausgegebene Schlüssel |
+| GET | `/api/schluessel/offene-liste?standort=` | `KIOSK_API_KEY` | Offene Schlüssel für das Rückgabe-Dropdown im Kiosk |
+| PATCH | `/api/schluessel/:id/zurueckgeben` | `ADMIN_API_KEY` | Schlüssel direkt im Portal zurücknehmen |
 
-Auth erfolgt jeweils über den Header `x-api-key`.
+Auth erfolgt jeweils über den Header `x-api-key`. `/api/standorte` ist
+bewusst ohne Auth, da nur Standort-Namen (keine personenbezogenen Daten)
+zurückgegeben werden.
 
 ## Struktur
 

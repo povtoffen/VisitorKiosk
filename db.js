@@ -12,6 +12,7 @@ db.pragma('journal_mode = WAL');
 db.exec(`
   CREATE TABLE IF NOT EXISTS besucher (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    standort TEXT NOT NULL,
     name TEXT NOT NULL,
     firma TEXT,
     ansprechpartner TEXT NOT NULL,
@@ -22,6 +23,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS schluessel (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    standort TEXT NOT NULL,
     name TEXT NOT NULL,
     firma TEXT,
     schluessel TEXT NOT NULL,
@@ -30,7 +32,8 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_besucher_offen ON besucher (abgemeldet_um);
-  CREATE INDEX IF NOT EXISTS idx_schluessel_schluessel ON schluessel (schluessel);
+  CREATE INDEX IF NOT EXISTS idx_besucher_standort ON besucher (standort);
+  CREATE INDEX IF NOT EXISTS idx_schluessel_standort_schluessel ON schluessel (standort, schluessel);
 `);
 
 module.exports = db;

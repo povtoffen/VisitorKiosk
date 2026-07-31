@@ -102,23 +102,48 @@
   #kiosk-root[data-mode="handwerker"] .confirm .stamp { background: var(--teal); color: #EAF4F4; }
   #kiosk-root .confirm h2 { font-size: 21px; margin: 0 0 6px 0; }
   #kiosk-root .confirm p { font-size: 14px; color: #7A7263; margin: 0; }
+
+  #kiosk-root .standort-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 28px; background: var(--paper-2); font-size: 12px; color: #6B6355;
+  }
+  #kiosk-root .standort-bar select {
+    padding: 4px 8px; font-size: 12px; border-radius: 6px; width: auto;
+  }
+  #kiosk-root .hint { font-size: 12px; color: #8A8272; margin: -4px 0 0 0; }
+  #kiosk-root select[disabled] { opacity: 0.6; }
 </style>
 </head>
 <body>
 <div id="kiosk-root"></div>
 
-<!-- KIOSK_API_KEY wird beim Ausliefern der Seite serverseitig aus der Umgebungsvariable eingesetzt -->
-<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__" };</script>
+<!-- KIOSK_API_KEY und STANDORTE werden beim Ausliefern der Seite serverseitig aus den Umgebungsvariablen eingesetzt -->
+<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__", standorte: "__STANDORTE__" };</script>
 
 <script>
 (function() {
   const root = document.getElementById('kiosk-root');
   root.dataset.mode = 'besucher';
-  const state = { mode: 'besucher', richtung: 'ausgabe' };
+
+  const standorte = Array.isArray(window.KIOSK_CONFIG.standorte) ? window.KIOSK_CONFIG.standorte : [];
+  const gespeicherterStandort = localStorage.getItem('kiosk_standort');
+  const state = {
+    mode: 'besucher',
+    richtung: 'ausgabe',
+    standort: (gespeicherterStandort && standorte.includes(gespeicherterStandort)) ? gespeicherterStandort : (standorte[0] || ''),
+    offeneSchluessel: [],
+    offeneSchluesselLoading: false
+  };
 
   function render() {
     root.innerHTML = `
       <div class="card">
+        <div class="standort-bar">
+          <span>Standort:</span>
+          <select id="standort-select">
+            ${standorte.map(s => `<option value="${escapeHtml(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+          </select>
+        </div>
         <div class="top">
           <p class="eyebrow">Empfang</p>
           <h1 class="display">${state.mode === 'besucher' ? 'Willkommen — bitte anmelden' : 'Schlüsselausgabe für Handwerker'}</h1>
@@ -142,6 +167,9 @@
       </div>
     `;
     bind();
+    if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') {
+      ladeOffeneSchluessel();
+    }
   }
 
   function besucherFields() {
@@ -175,9 +203,8 @@
           <button type="button" data-richtung="rueckgabe" data-active="${state.richtung === 'rueckgabe'}">Schlüssel zurückgeben</button>
         </div>
       </div>
-      <div>
-        <label for="f-schluessel">Schlüssel / Objekt</label>
-        <input id="f-schluessel" name="schluessel" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" />
+      <div id="schluessel-field">
+        ${schluesselFeldHtml()}
       </div>
       <div>
         <label for="f-name">Name des Handwerkers</label>
@@ -190,7 +217,59 @@
     `;
   }
 
+  function schluesselFeldHtml() {
+    if (state.richtung === 'ausgabe') {
+      return `
+        <label for="f-schluessel">Schlüssel / Objekt</label>
+        <input id="f-schluessel" name="schluessel" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" />
+      `;
+    }
+    if (state.offeneSchluesselLoading) {
+      return `<label>Schlüssel</label><select disabled><option>Wird geladen…</option></select>`;
+    }
+    if (!state.offeneSchluessel.length) {
+      return `<label>Schlüssel</label><select disabled><option>Aktuell keine Schlüssel ausgegeben</option></select><p class="hint">An diesem Standort ist gerade kein Schlüssel als ausgegeben erfasst.</p>`;
+    }
+    return `
+      <label for="f-schluessel">Schlüssel</label>
+      <select id="f-schluessel" name="schluessel">
+        ${state.offeneSchluessel.map(k => `<option value="${escapeHtml(k.schluessel)}">${escapeHtml(k.schluessel)} — ${escapeHtml(k.name)}${k.firma ? ' (' + escapeHtml(k.firma) + ')' : ''}</option>`).join('')}
+      </select>
+    `;
+  }
+
+  async function ladeOffeneSchluessel() {
+    state.offeneSchluesselLoading = true;
+    updateSchluesselField();
+    try {
+      const res = await fetch(`/api/schluessel/offene-liste?standort=${encodeURIComponent(state.standort)}`, {
+        headers: { 'x-api-key': window.KIOSK_CONFIG.apiKey }
+      });
+      state.offeneSchluessel = res.ok ? await res.json() : [];
+    } catch (err) {
+      state.offeneSchluessel = [];
+    }
+    state.offeneSchluesselLoading = false;
+    updateSchluesselField();
+  }
+
+  function updateSchluesselField() {
+    const field = root.querySelector('#schluessel-field');
+    if (field) field.innerHTML = schluesselFeldHtml();
+  }
+
   function bind() {
+    const standortSelect = root.querySelector('#standort-select');
+    if (standortSelect) {
+      standortSelect.addEventListener('change', () => {
+        state.standort = standortSelect.value;
+        localStorage.setItem('kiosk_standort', state.standort);
+        if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') {
+          ladeOffeneSchluessel();
+        }
+      });
+    }
+
     root.querySelectorAll('.toggle button').forEach(btn => {
       btn.addEventListener('click', () => {
         state.mode = btn.dataset.mode;
@@ -216,6 +295,8 @@
         });
         const sub = root.querySelector('#preview-sub');
         sub.textContent = state.richtung === 'ausgabe' ? 'Schlüssel wird ausgegeben' : 'Schlüssel wird zurückgegeben';
+        updateSchluesselField();
+        if (state.richtung === 'rueckgabe') ladeOffeneSchluessel();
       });
     });
 
@@ -226,7 +307,14 @@
     e.preventDefault();
     const errorEl = root.querySelector('#form-error');
     errorEl.textContent = '';
+
+    if (!state.standort) {
+      errorEl.textContent = 'Kein Standort konfiguriert. Bitte am Empfang melden.';
+      return;
+    }
+
     const data = Object.fromEntries(new FormData(e.target).entries());
+    data.standort = state.standort;
 
     if (!data.name || !data.name.trim()) {
       errorEl.textContent = 'Bitte Namen eingeben.';
@@ -247,6 +335,8 @@
     submitBtn.textContent = 'Wird gespeichert…';
 
     const endpoint = state.mode === 'besucher' ? '/api/besucher' : '/api/schluessel';
+    let ok = false;
+    let serverError = '';
 
     try {
       const res = await fetch(endpoint, {
@@ -257,11 +347,20 @@
         },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Anfrage fehlgeschlagen');
+      ok = res.ok;
+      if (!ok) {
+        const body = await res.json().catch(() => ({}));
+        serverError = body.error || '';
+      }
     } catch (err) {
-      errorEl.textContent = 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      ok = false;
+    }
+
+    if (!ok) {
+      errorEl.textContent = serverError || 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
       submitBtn.disabled = false;
       submitBtn.textContent = state.mode === 'besucher' ? 'Anmeldung abschicken' : 'Vorgang bestätigen';
+      if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') ladeOffeneSchluessel();
       return;
     }
 

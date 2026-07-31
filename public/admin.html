@@ -52,8 +52,12 @@
   }
   #app .tabs button[data-active="true"] { background: var(--teal); border-color: var(--teal); }
 
-  #app .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  #app .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   #app .toolbar label { font-size: 13px; color: #C7CDD5; display: flex; align-items: center; gap: 6px; }
+  #app .toolbar select {
+    padding: 6px 10px; border-radius: 7px; border: 1.5px solid #38414D; background: #232D3A;
+    color: var(--paper); font-family: inherit; font-size: 13px;
+  }
   #app .toolbar .refresh {
     margin-left: auto; background: transparent; border: 1.5px solid #38414D; color: var(--paper);
     padding: 8px 14px; border-radius: 8px; font-family: inherit; cursor: pointer; font-size: 13px;
@@ -79,10 +83,19 @@
 <script>
 (function() {
   const app = document.getElementById('app');
-  const state = { authed: false, key: '', tab: 'besucher', onlyOpen: true, rows: [], loading: false, error: '' };
+  const state = { authed: false, key: '', tab: 'besucher', onlyOpen: true, standort: '', standorte: [], rows: [], loading: false, error: '' };
 
   const storedKey = sessionStorage.getItem('admin_api_key');
   if (storedKey) { state.key = storedKey; state.authed = true; }
+
+  async function ladeStandorte() {
+    try {
+      const res = await fetch('/api/standorte');
+      state.standorte = res.ok ? await res.json() : [];
+    } catch (err) {
+      state.standorte = [];
+    }
+  }
 
   function render() {
     if (!state.authed) { renderLogin(); return; }
@@ -112,6 +125,7 @@
     state.key = key;
     state.authed = true;
     sessionStorage.setItem('admin_api_key', key);
+    await ladeStandorte();
     render();
     loadData();
   }
@@ -135,6 +149,10 @@
         </div>
         <div class="toolbar">
           <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'besucher' ? 'nur anwesende Besucher' : 'nur offene Schlüssel'}</label>
+          <select id="standort-filter">
+            <option value="">Alle Standorte</option>
+            ${state.standorte.map(s => `<option value="${escapeHtml(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+          </select>
           <button class="refresh" id="refresh-btn">Aktualisieren</button>
         </div>
         <div id="table-container"></div>
@@ -145,6 +163,7 @@
     });
     app.querySelector('#logout-btn').addEventListener('click', logout);
     app.querySelector('#only-open').addEventListener('change', (e) => { state.onlyOpen = e.target.checked; loadData(); });
+    app.querySelector('#standort-filter').addEventListener('change', (e) => { state.standort = e.target.value; loadData(); });
     app.querySelector('#refresh-btn').addEventListener('click', loadData);
     renderTable();
   }
@@ -153,7 +172,10 @@
     state.loading = true;
     renderTable();
     const endpoint = state.tab === 'besucher' ? '/api/besucher' : '/api/schluessel';
-    const query = state.onlyOpen ? '?offen=true' : '';
+    const params = new URLSearchParams();
+    if (state.onlyOpen) params.set('offen', 'true');
+    if (state.standort) params.set('standort', state.standort);
+    const query = params.toString() ? `?${params.toString()}` : '';
     try {
       const res = await fetch(endpoint + query, { headers: { 'x-api-key': state.key } });
       if (res.status === 401) { logout(); return; }
@@ -176,10 +198,11 @@
     if (state.tab === 'besucher') {
       container.innerHTML = `
         <table>
-          <thead><tr><th>Name</th><th>Firma</th><th>Ansprechpartner</th><th>Grund</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Ansprechpartner</th><th>Grund</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
           <tbody>
             ${state.rows.map(r => `
               <tr>
+                <td>${escapeHtml(r.standort)}</td>
                 <td>${escapeHtml(r.name)}</td>
                 <td>${escapeHtml(r.firma || '—')}</td>
                 <td>${escapeHtml(r.ansprechpartner)}</td>
@@ -198,25 +221,35 @@
     } else {
       container.innerHTML = `
         <table>
-          <thead><tr><th>Schlüssel</th><th>Name</th><th>Firma</th><th>Vorgang</th><th>Zeitpunkt</th></tr></thead>
+          <thead><tr><th>Standort</th><th>Schlüssel</th><th>Name</th><th>Firma</th><th>Vorgang</th><th>Zeitpunkt</th><th></th></tr></thead>
           <tbody>
             ${state.rows.map(r => `
               <tr>
+                <td>${escapeHtml(r.standort)}</td>
                 <td>${escapeHtml(r.schluessel)}</td>
                 <td>${escapeHtml(r.name)}</td>
                 <td>${escapeHtml(r.firma || '—')}</td>
                 <td><span class="pill ${r.richtung}">${r.richtung === 'ausgabe' ? 'ausgegeben' : 'zurückgegeben'}</span></td>
                 <td>${formatTime(r.zeitpunkt)}</td>
+                <td>${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-id="${r.id}">Zurückgeben</button>` : ''}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       `;
+      container.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', () => zurueckgeben(btn.dataset.id));
+      });
     }
   }
 
   async function abmelden(id) {
     await fetch(`/api/besucher/${id}/abmelden`, { method: 'PATCH', headers: { 'x-api-key': state.key } });
+    loadData();
+  }
+
+  async function zurueckgeben(id) {
+    await fetch(`/api/schluessel/${id}/zurueckgeben`, { method: 'PATCH', headers: { 'x-api-key': state.key } });
     loadData();
   }
 
