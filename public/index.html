@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Empfang — Besucheranmeldung</title>
+<title>Empfang</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -26,367 +26,401 @@
       radial-gradient(circle at 15% 20%, rgba(217,142,61,0.10), transparent 40%),
       radial-gradient(circle at 85% 80%, rgba(62,112,117,0.14), transparent 45%);
     color: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
+    display: flex; align-items: center; justify-content: center; padding: 32px 16px;
   }
   #kiosk-root .display { font-family: 'Space Grotesk', sans-serif; }
+  #kiosk-root .card { width: 100%; max-width: 480px; background: var(--paper); border-radius: 18px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04); overflow: hidden; }
+  #kiosk-root[data-rolle="handwerker"] .fortschritt .punkt[data-erledigt="true"] { background: var(--teal); }
+  #kiosk-root .top { padding: 26px 28px 0 28px; }
+  #kiosk-root .eyebrow { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A7263; margin: 0 0 4px 0; font-weight: 600; }
+  #kiosk-root h1 { font-size: 23px; margin: 0 0 18px 0; letter-spacing: -0.01em; line-height: 1.25; }
+  #kiosk-root .fortschritt { display: flex; gap: 6px; padding: 0 28px; margin-bottom: 18px; }
+  #kiosk-root .fortschritt .punkt { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  #kiosk-root .fortschritt .punkt[data-erledigt="true"] { background: var(--amber); }
 
-  #kiosk-root .card {
-    width: 100%;
-    max-width: 520px;
-    background: var(--paper);
-    border-radius: 18px;
-    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
-    overflow: hidden;
-  }
-  #kiosk-root .top { padding: 28px 28px 0 28px; }
-  #kiosk-root .eyebrow {
-    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
-    color: #7A7263; margin: 0 0 4px 0; font-weight: 600;
-  }
-  #kiosk-root h1 { font-size: 26px; margin: 0 0 20px 0; letter-spacing: -0.01em; }
-  #kiosk-root .toggle { display: flex; gap: 8px; padding: 0 28px; margin-bottom: 22px; }
-  #kiosk-root .toggle button {
-    flex: 1; padding: 14px 10px; border-radius: 12px; border: 2px solid var(--line);
-    background: transparent; font-family: inherit; font-size: 15px; font-weight: 600;
-    cursor: pointer; color: #6B6355; transition: all 0.15s ease;
-  }
-  #kiosk-root .toggle button[data-active="true"][data-mode="besucher"] {
-    background: var(--amber); border-color: var(--amber); color: #2A1C0B;
-  }
-  #kiosk-root .toggle button[data-active="true"][data-mode="handwerker"] {
-    background: var(--teal); border-color: var(--teal); color: #EAF4F4;
-  }
-  #kiosk-root .badge-preview {
-    margin: 0 28px 22px 28px; border-radius: 12px; padding: 16px 18px;
-    background: var(--paper-2); border: 1px dashed var(--line);
-    display: flex; align-items: center; gap: 14px; transition: border-color 0.2s ease;
-  }
-  #kiosk-root .badge-preview .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--amber-deep); flex-shrink: 0; }
-  #kiosk-root[data-mode="handwerker"] .badge-preview .dot { background: var(--teal-deep); }
-  #kiosk-root .badge-preview .name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; line-height: 1.2; }
-  #kiosk-root .badge-preview .sub { font-size: 12px; color: #8A8272; }
-  #kiosk-root form { padding: 0 28px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+  #kiosk-root .rollen { display: flex; flex-direction: column; gap: 10px; padding: 0 28px 28px 28px; }
+  #kiosk-root .rollen-btn { padding: 18px 16px; border-radius: 14px; border: 2px solid var(--line); background: #fff;
+    font-family: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  #kiosk-root .rollen-btn .titel { font-weight: 700; font-size: 16px; }
+  #kiosk-root .rollen-btn .sub { font-size: 12px; color: #8A8272; }
+  #kiosk-root .rollen-btn:active { transform: scale(0.98); }
+  #kiosk-root .rollen-btn.leise { border-style: dashed; }
+
+  #kiosk-root form, #kiosk-root .step-body { padding: 0 28px 20px 28px; display: flex; flex-direction: column; gap: 14px; }
   #kiosk-root label { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: #5C5647; display: block; margin-bottom: 6px; }
-  #kiosk-root input, #kiosk-root select, #kiosk-root textarea {
-    width: 100%; padding: 12px 13px; border-radius: 9px; border: 1.5px solid var(--line);
-    background: #FFFFFF; font-family: inherit; font-size: 15px; color: var(--ink);
-  }
+  #kiosk-root input, #kiosk-root select { width: 100%; padding: 13px 14px; border-radius: 9px; border: 1.5px solid var(--line);
+    background: #FFFFFF; font-family: inherit; font-size: 16px; color: var(--ink); }
   #kiosk-root input:focus, #kiosk-root select:focus { outline: none; border-color: var(--amber-deep); }
-  #kiosk-root[data-mode="handwerker"] input:focus { border-color: var(--teal-deep); }
-  #kiosk-root .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  #kiosk-root .segmented { display: flex; background: var(--paper-2); border-radius: 9px; padding: 4px; gap: 4px; border: 1.5px solid var(--line); }
-  #kiosk-root .segmented button {
-    flex: 1; border: none; background: transparent; padding: 10px 6px; border-radius: 6px;
-    font-family: inherit; font-size: 13px; font-weight: 600; color: #6B6355; cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  #kiosk-root .segmented button[data-active="true"] { background: var(--teal); color: #EAF4F4; }
-  #kiosk-root .submit {
-    margin-top: 6px; padding: 15px; border-radius: 10px; border: none; font-family: inherit;
-    font-size: 16px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber);
-    transition: transform 0.08s ease, background 0.15s ease;
-  }
-  #kiosk-root .submit:active { transform: scale(0.98); }
-  #kiosk-root[data-mode="handwerker"] .submit { color: #EAF4F4; background: var(--teal); }
-  #kiosk-root .submit:disabled { opacity: 0.6; cursor: not-allowed; }
-  #kiosk-root .error { color: var(--danger); font-size: 13px; margin: -4px 0 0 0; min-height: 16px; }
-  #kiosk-root .confirm { padding: 60px 28px 56px 28px; text-align: center; }
-  #kiosk-root .confirm .stamp {
-    width: 64px; height: 64px; border-radius: 50%; background: var(--amber);
-    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto;
-    font-size: 30px; color: #2A1C0B;
-  }
-  #kiosk-root[data-mode="handwerker"] .confirm .stamp { background: var(--teal); color: #EAF4F4; }
+  #kiosk-root[data-rolle="handwerker"] input:focus { border-color: var(--teal-deep); }
+
+  #kiosk-root .wahl-row { display: flex; gap: 10px; padding: 0 28px 20px 28px; }
+  #kiosk-root .wahl-row button { flex: 1; padding: 18px; border-radius: 12px; border: 2px solid var(--line);
+    background: #fff; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; color: #6B6355; }
+  #kiosk-root .wahl-row button:active { transform: scale(0.98); }
+
+  #kiosk-root .step-nav { display: flex; gap: 10px; padding: 0 28px 28px 28px; }
+  #kiosk-root .zurueck-btn { flex: 0 0 auto; padding: 15px 18px; border-radius: 10px; border: 2px solid var(--line);
+    background: transparent; font-family: inherit; font-weight: 700; cursor: pointer; color: #6B6355; }
+  #kiosk-root .weiter-btn { flex: 1; padding: 15px; border-radius: 10px; border: none; font-family: inherit;
+    font-size: 16px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); }
+  #kiosk-root[data-rolle="handwerker"] .weiter-btn { color: #EAF4F4; background: var(--teal); }
+  #kiosk-root .weiter-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  #kiosk-root .review-zeile { display: flex; justify-content: space-between; gap: 10px; font-size: 14px;
+    padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px dashed var(--line); }
+  #kiosk-root .review-zeile span:first-child { color: #8A8272; flex-shrink: 0; }
+  #kiosk-root .review-zeile span:last-child { text-align: right; font-weight: 600; }
+
+  #kiosk-root .liste { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+  #kiosk-root .liste-item { padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff;
+    text-align: left; cursor: pointer; font-family: inherit; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  #kiosk-root .liste-item .n { font-weight: 700; font-size: 15px; }
+  #kiosk-root .liste-item .s { font-size: 12px; color: #8A8272; }
+  #kiosk-root .liste-item .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px;
+    border-radius: 999px; background: var(--paper-2); color: #6B6355; flex-shrink: 0; }
+  #kiosk-root .leer { padding: 24px; text-align: center; color: #8A8272; font-size: 14px; }
+
+  #kiosk-root .toggle-zeile { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 4px 0; }
+  #kiosk-root .toggle-zeile input { width: auto; }
+
+  #kiosk-root .error { color: var(--danger); font-size: 13px; margin: -6px 0 0 0; min-height: 16px; padding: 0 28px; }
+
+  #kiosk-root .confirm { padding: 56px 28px 52px 28px; text-align: center; }
+  #kiosk-root .confirm .stamp { width: 64px; height: 64px; border-radius: 50%; background: var(--amber);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto; font-size: 30px; color: #2A1C0B; }
+  #kiosk-root[data-rolle="handwerker"] .confirm .stamp { background: var(--teal); color: #EAF4F4; }
   #kiosk-root .confirm h2 { font-size: 21px; margin: 0 0 6px 0; }
   #kiosk-root .confirm p { font-size: 14px; color: #7A7263; margin: 0; }
-
-  #kiosk-root .standort-bar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 28px; background: var(--paper-2); font-size: 12px; color: #6B6355;
-  }
-  #kiosk-root .standort-bar select {
-    padding: 4px 8px; font-size: 12px; border-radius: 6px; width: auto;
-  }
-  #kiosk-root .hint { font-size: 12px; color: #8A8272; margin: -4px 0 0 0; }
-  #kiosk-root select[disabled] { opacity: 0.6; }
 </style>
 </head>
 <body>
 <div id="kiosk-root"></div>
 
-<!-- KIOSK_API_KEY und STANDORTE werden beim Ausliefern der Seite serverseitig aus den Umgebungsvariablen eingesetzt -->
-<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__", standorte: "__STANDORTE__" };</script>
+<!-- KIOSK_API_KEY und der fest zugeordnete Standort werden serverseitig eingesetzt -->
+<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__", standort: "__STANDORT__" };</script>
 
 <script>
 (function() {
   const root = document.getElementById('kiosk-root');
-  root.dataset.mode = 'besucher';
 
-  const standorte = Array.isArray(window.KIOSK_CONFIG.standorte) ? window.KIOSK_CONFIG.standorte : [];
-  const gespeicherterStandort = localStorage.getItem('kiosk_standort');
-  const state = {
-    mode: 'besucher',
-    richtung: 'ausgabe',
-    standort: (gespeicherterStandort && standorte.includes(gespeicherterStandort)) ? gespeicherterStandort : (standorte[0] || ''),
-    offeneSchluessel: [],
-    offeneSchluesselLoading: false
-  };
+  function leererState() {
+    return {
+      rolle: null,
+      stepIndex: 0,
+      standort: window.KIOSK_CONFIG.standort,
+      name: '', firma: '', ansprechpartner: '', grund: '',
+      brauchtSchluessel: null, schluessel: '',
+      offeneEintraege: [], offeneLoading: false, offeneGeladen: false,
+      ausgewaehlt: null, schluesselZurueck: true,
+      submitting: false, error: '', fertig: null
+    };
+  }
+  let state = leererState();
+
+  function currentSteps() {
+    if (state.rolle === 'besucher') return ['name', 'firma', 'details', 'review'];
+    if (state.rolle === 'handwerker') {
+      const s = ['name', 'firma', 'schluessel-frage'];
+      if (state.brauchtSchluessel === 'ja') s.push('schluessel-name');
+      s.push('review');
+      return s;
+    }
+    return [];
+  }
 
   function render() {
-    root.innerHTML = `
-      <div class="card">
-        <div class="standort-bar">
-          <span>Standort:</span>
-          <select id="standort-select">
-            ${standorte.map(s => `<option value="${escapeHtml(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="top">
-          <p class="eyebrow">Empfang</p>
-          <h1 class="display">${state.mode === 'besucher' ? 'Willkommen — bitte anmelden' : 'Schlüsselausgabe für Handwerker'}</h1>
-        </div>
-        <div class="toggle">
-          <button type="button" data-mode="besucher" data-active="${state.mode === 'besucher'}">Ich bin Besucher</button>
-          <button type="button" data-mode="handwerker" data-active="${state.mode === 'handwerker'}">Ich bin Handwerker</button>
-        </div>
-        <div class="badge-preview">
-          <div class="dot"></div>
-          <div>
-            <div class="name" id="preview-name">${state.mode === 'besucher' ? 'Ihr Name erscheint hier' : 'Name des Handwerkers'}</div>
-            <div class="sub" id="preview-sub">${state.mode === 'besucher' ? 'Besucherausweis' : 'Schlüsselvorgang'}</div>
-          </div>
-        </div>
-        <form id="kiosk-form" novalidate>
-          ${state.mode === 'besucher' ? besucherFields() : handwerkerFields()}
-          <p class="error" id="form-error"></p>
-          <button type="submit" class="submit">${state.mode === 'besucher' ? 'Anmeldung abschicken' : 'Vorgang bestätigen'}</button>
-        </form>
-      </div>
-    `;
-    bind();
-    if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') {
-      ladeOffeneSchluessel();
-    }
+    root.dataset.rolle = state.rolle || '';
+    if (state.fertig) return renderFertig();
+    if (state.rolle === 'abmelden') return renderAbmelden();
+    if (!state.rolle) return renderStart();
+    return renderWizard();
   }
 
-  function besucherFields() {
-    return `
-      <div>
-        <label for="f-name">Vor- und Nachname</label>
-        <input id="f-name" name="name" placeholder="Max Mustermann" autocomplete="off" />
-      </div>
-      <div>
-        <label for="f-firma">Firma (optional)</label>
-        <input id="f-firma" name="firma" placeholder="Firma GmbH" autocomplete="off" />
-      </div>
-      <div>
-        <label for="f-ansprechpartner">Wen möchten Sie besuchen?</label>
-        <input id="f-ansprechpartner" name="ansprechpartner" placeholder="Name der Ansprechperson" autocomplete="off" />
-      </div>
-      <div>
-        <label for="f-grund">Grund des Besuchs</label>
-        <input id="f-grund" name="grund" placeholder="z. B. Meeting, Lieferung" autocomplete="off" />
-      </div>
-    `;
+  function cardShell(innerHtml) {
+    root.innerHTML = `<div class="card">${innerHtml}</div>`;
   }
 
-  function handwerkerFields() {
-    return `
-      <div>
-        <label>Vorgang</label>
-        <div class="segmented" id="richtung-segmented">
-          <input type="hidden" name="richtung" id="f-richtung" value="${state.richtung}" />
-          <button type="button" data-richtung="ausgabe" data-active="${state.richtung === 'ausgabe'}">Schlüssel abholen</button>
-          <button type="button" data-richtung="rueckgabe" data-active="${state.richtung === 'rueckgabe'}">Schlüssel zurückgeben</button>
-        </div>
+  function renderStart() {
+    cardShell(`
+      <div class="top">
+        <p class="eyebrow">Empfang — ${escapeHtml(state.standort)}</p>
+        <h1 class="display">Willkommen!</h1>
       </div>
-      <div id="schluessel-field">
-        ${schluesselFeldHtml()}
+      <div class="rollen">
+        <button type="button" class="rollen-btn" data-rolle="besucher">
+          <span class="titel">Ich bin Besucher</span>
+          <span class="sub">Neu anmelden</span>
+        </button>
+        <button type="button" class="rollen-btn" data-rolle="handwerker">
+          <span class="titel">Ich bin Handwerker</span>
+          <span class="sub">Neu anmelden, ggf. mit Schlüssel</span>
+        </button>
+        <button type="button" class="rollen-btn leise" data-rolle="abmelden">
+          <span class="titel">Ich möchte mich abmelden</span>
+          <span class="sub">Für bereits angemeldete Besucher &amp; Handwerker</span>
+        </button>
       </div>
-      <div>
-        <label for="f-name">Name des Handwerkers</label>
-        <input id="f-name" name="name" placeholder="Vor- und Nachname" autocomplete="off" />
-      </div>
-      <div>
-        <label for="f-firma">Firma</label>
-        <input id="f-firma" name="firma" placeholder="Firma GmbH" autocomplete="off" />
-      </div>
-    `;
-  }
-
-  function schluesselFeldHtml() {
-    if (state.richtung === 'ausgabe') {
-      return `
-        <label for="f-schluessel">Schlüssel / Objekt</label>
-        <input id="f-schluessel" name="schluessel" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" />
-      `;
-    }
-    if (state.offeneSchluesselLoading) {
-      return `<label>Schlüssel</label><select disabled><option>Wird geladen…</option></select>`;
-    }
-    if (!state.offeneSchluessel.length) {
-      return `<label>Schlüssel</label><select disabled><option>Aktuell keine Schlüssel ausgegeben</option></select><p class="hint">An diesem Standort ist gerade kein Schlüssel als ausgegeben erfasst.</p>`;
-    }
-    return `
-      <label for="f-schluessel">Schlüssel</label>
-      <select id="f-schluessel" name="schluessel">
-        ${state.offeneSchluessel.map(k => `<option value="${escapeHtml(k.schluessel)}">${escapeHtml(k.schluessel)} — ${escapeHtml(k.name)}${k.firma ? ' (' + escapeHtml(k.firma) + ')' : ''}</option>`).join('')}
-      </select>
-    `;
-  }
-
-  async function ladeOffeneSchluessel() {
-    state.offeneSchluesselLoading = true;
-    updateSchluesselField();
-    try {
-      const res = await fetch(`/api/schluessel/offene-liste?standort=${encodeURIComponent(state.standort)}`, {
-        headers: { 'x-api-key': window.KIOSK_CONFIG.apiKey }
-      });
-      state.offeneSchluessel = res.ok ? await res.json() : [];
-    } catch (err) {
-      state.offeneSchluessel = [];
-    }
-    state.offeneSchluesselLoading = false;
-    updateSchluesselField();
-  }
-
-  function updateSchluesselField() {
-    const field = root.querySelector('#schluessel-field');
-    if (field) field.innerHTML = schluesselFeldHtml();
-  }
-
-  function bind() {
-    const standortSelect = root.querySelector('#standort-select');
-    if (standortSelect) {
-      standortSelect.addEventListener('change', () => {
-        state.standort = standortSelect.value;
-        localStorage.setItem('kiosk_standort', state.standort);
-        if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') {
-          ladeOffeneSchluessel();
-        }
-      });
-    }
-
-    root.querySelectorAll('.toggle button').forEach(btn => {
+    `);
+    root.querySelectorAll('.rollen-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        state.mode = btn.dataset.mode;
-        root.dataset.mode = state.mode;
+        state.rolle = btn.dataset.rolle;
+        state.stepIndex = 0;
         render();
       });
     });
-
-    const nameInput = root.querySelector('#f-name');
-    if (nameInput) {
-      nameInput.addEventListener('input', () => {
-        const preview = root.querySelector('#preview-name');
-        preview.textContent = nameInput.value.trim() || (state.mode === 'besucher' ? 'Ihr Name erscheint hier' : 'Name des Handwerkers');
-      });
-    }
-
-    root.querySelectorAll('#richtung-segmented button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.richtung = btn.dataset.richtung;
-        root.querySelector('#f-richtung').value = state.richtung;
-        root.querySelectorAll('#richtung-segmented button').forEach(b => {
-          b.dataset.active = (b.dataset.richtung === state.richtung).toString();
-        });
-        const sub = root.querySelector('#preview-sub');
-        sub.textContent = state.richtung === 'ausgabe' ? 'Schlüssel wird ausgegeben' : 'Schlüssel wird zurückgegeben';
-        updateSchluesselField();
-        if (state.richtung === 'rueckgabe') ladeOffeneSchluessel();
-      });
-    });
-
-    root.querySelector('#kiosk-form').addEventListener('submit', onSubmit);
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    const errorEl = root.querySelector('#form-error');
-    errorEl.textContent = '';
+  function fortschrittHtml(steps) {
+    return `<div class="fortschritt">${steps.map((_, i) => `<div class="punkt" data-erledigt="${i <= state.stepIndex}"></div>`).join('')}</div>`;
+  }
 
-    if (!state.standort) {
-      errorEl.textContent = 'Kein Standort konfiguriert. Bitte am Empfang melden.';
+  function renderWizard() {
+    const steps = currentSteps();
+    if (state.stepIndex >= steps.length) state.stepIndex = steps.length - 1;
+    const step = steps[state.stepIndex];
+    const istLetzter = state.stepIndex === steps.length - 1;
+
+    let titel = '';
+    let body = '';
+    let weiterAktiv = true;
+    let weiterText = 'Weiter';
+    let weiterAktion = 'weiter';
+
+    if (step === 'name') {
+      titel = state.rolle === 'besucher' ? 'Wie ist Ihr Name?' : 'Wie ist Ihr Name?';
+      body = `<div><label for="f-name">Vor- und Nachname</label><input id="f-name" value="${escapeAttr(state.name)}" placeholder="Max Mustermann" autocomplete="off" /></div>`;
+      weiterAktiv = !!state.name.trim();
+    } else if (step === 'firma') {
+      titel = 'Für welche Firma sind Sie hier?';
+      body = `<div><label for="f-firma">Firma (optional)</label><input id="f-firma" value="${escapeAttr(state.firma)}" placeholder="Firma GmbH" autocomplete="off" /></div>`;
+      weiterAktiv = true;
+    } else if (step === 'details') {
+      titel = 'Wen möchten Sie besuchen?';
+      body = `
+        <div><label for="f-ansprechpartner">Ansprechperson</label><input id="f-ansprechpartner" value="${escapeAttr(state.ansprechpartner)}" placeholder="Name der Ansprechperson" autocomplete="off" /></div>
+        <div><label for="f-grund">Grund des Besuchs (optional)</label><input id="f-grund" value="${escapeAttr(state.grund)}" placeholder="z. B. Meeting, Lieferung" autocomplete="off" /></div>
+      `;
+      weiterAktiv = !!state.ansprechpartner.trim();
+    } else if (step === 'schluessel-frage') {
+      titel = 'Brauchen Sie einen Schlüssel?';
+      root.dataset.rolle = 'handwerker';
+      cardShell(`
+        <div class="top">${fortschrittHtml(steps)}<h1 class="display">${titel}</h1></div>
+        <div class="wahl-row">
+          <button type="button" id="btn-nein">Nein</button>
+          <button type="button" id="btn-ja">Ja</button>
+        </div>
+        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button></div>
+      `);
+      root.querySelector('#btn-ja').addEventListener('click', () => { state.brauchtSchluessel = 'ja'; state.stepIndex++; render(); });
+      root.querySelector('#btn-nein').addEventListener('click', () => { state.brauchtSchluessel = 'nein'; state.schluessel = ''; state.stepIndex++; render(); });
+      root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
       return;
+    } else if (step === 'schluessel-name') {
+      titel = 'Welchen Schlüssel benötigen Sie?';
+      body = `<div><label for="f-schluessel">Schlüssel / Objekt</label><input id="f-schluessel" value="${escapeAttr(state.schluessel)}" placeholder="z. B. Keller, Raum 2.14" autocomplete="off" /></div>`;
+      weiterAktiv = !!state.schluessel.trim();
+    } else if (step === 'review') {
+      titel = 'Bitte prüfen';
+      const zeilen = [['Name', state.name], ['Firma', state.firma || '—']];
+      if (state.rolle === 'besucher') { zeilen.push(['Ansprechperson', state.ansprechpartner]); zeilen.push(['Grund', state.grund || '—']); }
+      if (state.rolle === 'handwerker') { zeilen.push(['Schlüssel', state.brauchtSchluessel === 'ja' ? state.schluessel : 'nicht benötigt']); }
+      body = zeilen.map(([k, v]) => `<div class="review-zeile"><span>${escapeHtml(k)}</span><span>${escapeHtml(v)}</span></div>`).join('');
+      weiterText = state.submitting ? 'Wird gespeichert…' : 'Anmeldung abschicken';
+      weiterAktion = 'absenden';
+      weiterAktiv = !state.submitting;
     }
 
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    data.standort = state.standort;
+    cardShell(`
+      <div class="top">${fortschrittHtml(steps)}<h1 class="display">${titel}</h1></div>
+      <form id="wizard-form" novalidate>${body}</form>
+      <p class="error">${escapeHtml(state.error)}</p>
+      <div class="step-nav">
+        <button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button>
+        <button type="button" class="weiter-btn" id="btn-weiter" ${weiterAktiv ? '' : 'disabled'}>${weiterText}</button>
+      </div>
+    `);
 
-    if (!data.name || !data.name.trim()) {
-      errorEl.textContent = 'Bitte Namen eingeben.';
-      return;
-    }
-    if (state.mode === 'besucher' && (!data.ansprechpartner || !data.ansprechpartner.trim())) {
-      errorEl.textContent = 'Bitte angeben, wen Sie besuchen möchten.';
-      return;
-    }
-    if (state.mode === 'handwerker' && (!data.schluessel || !data.schluessel.trim())) {
-      errorEl.textContent = 'Bitte Schlüssel bzw. Objekt angeben.';
-      return;
-    }
+    const nameInput = root.querySelector('#f-name');
+    if (nameInput) nameInput.addEventListener('input', e => { state.name = e.target.value; syncWeiterButton(); });
+    const firmaInput = root.querySelector('#f-firma');
+    if (firmaInput) firmaInput.addEventListener('input', e => { state.firma = e.target.value; });
+    const apInput = root.querySelector('#f-ansprechpartner');
+    if (apInput) apInput.addEventListener('input', e => { state.ansprechpartner = e.target.value; syncWeiterButton(); });
+    const grundInput = root.querySelector('#f-grund');
+    if (grundInput) grundInput.addEventListener('input', e => { state.grund = e.target.value; });
+    const schluesselInput = root.querySelector('#f-schluessel');
+    if (schluesselInput) schluesselInput.addEventListener('input', e => { state.schluessel = e.target.value; syncWeiterButton(); });
 
-    const form = e.target;
-    const submitBtn = form.querySelector('.submit');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Wird gespeichert…';
+    root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
+    root.querySelector('#btn-weiter').addEventListener('click', () => {
+      if (weiterAktion === 'absenden') { submitAnmeldung(); return; }
+      state.error = '';
+      state.stepIndex++;
+      render();
+    });
+  }
 
-    const endpoint = state.mode === 'besucher' ? '/api/besucher' : '/api/schluessel';
-    let ok = false;
-    let serverError = '';
+  function syncWeiterButton() {
+    const steps = currentSteps();
+    const step = steps[state.stepIndex];
+    const btn = root.querySelector('#btn-weiter');
+    if (!btn) return;
+    let aktiv = true;
+    if (step === 'name') aktiv = !!state.name.trim();
+    if (step === 'details') aktiv = !!state.ansprechpartner.trim();
+    if (step === 'schluessel-name') aktiv = !!state.schluessel.trim();
+    btn.disabled = !aktiv;
+  }
 
+  function goBack() {
+    state.error = '';
+    if (state.stepIndex > 0) { state.stepIndex--; render(); return; }
+    state = leererState();
+    render();
+  }
+
+  async function submitAnmeldung() {
+    state.submitting = true; state.error = ''; render();
+    const endpoint = state.rolle === 'besucher' ? '/api/besucher' : '/api/handwerker';
+    const body = { standort: state.standort, name: state.name.trim(), firma: state.firma.trim() || null };
+    if (state.rolle === 'besucher') { body.ansprechpartner = state.ansprechpartner.trim(); body.grund = state.grund.trim() || null; }
+    if (state.rolle === 'handwerker') { body.schluessel = state.brauchtSchluessel === 'ja' ? state.schluessel.trim() : null; }
+
+    let ok = false, serverError = '';
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': window.KIOSK_CONFIG.apiKey
-        },
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/json', 'x-api-key': window.KIOSK_CONFIG.apiKey },
+        body: JSON.stringify(body)
       });
       ok = res.ok;
-      if (!ok) {
-        const body = await res.json().catch(() => ({}));
-        serverError = body.error || '';
-      }
-    } catch (err) {
-      ok = false;
-    }
+      if (!ok) { const b = await res.json().catch(() => ({})); serverError = b.error || ''; }
+    } catch (e) { ok = false; }
 
     if (!ok) {
-      errorEl.textContent = serverError || 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
-      submitBtn.disabled = false;
-      submitBtn.textContent = state.mode === 'besucher' ? 'Anmeldung abschicken' : 'Vorgang bestätigen';
-      if (state.mode === 'handwerker' && state.richtung === 'rueckgabe') ladeOffeneSchluessel();
+      state.submitting = false;
+      state.error = serverError || 'Speichern fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      render();
       return;
     }
 
-    showConfirmation(data);
+    const name = state.name.trim();
+    const rolle = state.rolle;
+    state = leererState();
+    state.fertig = { art: 'anmeldung', rolle, name };
+    render();
   }
 
-  function showConfirmation(entry) {
-    const card = root.querySelector('.card');
-    card.innerHTML = `
-      <div class="confirm">
-        <div class="stamp">✓</div>
-        <h2 class="display">${state.mode === 'besucher' ? 'Danke, ' + escapeHtml(entry.name) + '!' : 'Vorgang erfasst'}</h2>
-        <p>${state.mode === 'besucher' ? 'Ihre Anmeldung wurde übermittelt.' : (entry.richtung === 'ausgabe' ? 'Schlüsselausgabe wurde erfasst.' : 'Schlüsselrückgabe wurde erfasst.')}</p>
-      </div>
-    `;
-    setTimeout(() => {
-      state.richtung = 'ausgabe';
+  // --- Abmeldung ------------------------------------------------------------
+
+  async function renderAbmelden() {
+    if (!state.offeneGeladen && !state.offeneLoading) {
+      state.offeneLoading = true;
+      cardShell(`<div class="top"><p class="eyebrow">Abmeldung</p><h1 class="display">Wer möchte sich abmelden?</h1></div><div class="step-body"><p class="leer">Lädt…</p></div>`);
+      try {
+        const res = await fetch(`/api/checkins/offene-liste?standort=${encodeURIComponent(state.standort)}`, {
+          headers: { 'x-api-key': window.KIOSK_CONFIG.apiKey }
+        });
+        state.offeneEintraege = res.ok ? await res.json() : [];
+      } catch (e) { state.offeneEintraege = []; }
+      state.offeneLoading = false;
+      state.offeneGeladen = true;
       render();
-    }, 4000);
+      return;
+    }
+
+    if (!state.ausgewaehlt) {
+      const liste = state.offeneEintraege.length
+        ? `<div class="liste">${state.offeneEintraege.map(e => `
+            <button type="button" class="liste-item" data-id="${e.id}" data-typ="${e.typ}">
+              <span><span class="n">${escapeHtml(e.name)}</span><br/><span class="s">${escapeHtml(e.firma || '—')}</span></span>
+              <span class="badge">${e.typ === 'besucher' ? 'Besucher' : 'Handwerker'}</span>
+            </button>
+          `).join('')}</div>`
+        : `<p class="leer">Aktuell ist niemand als anwesend erfasst.</p>`;
+      cardShell(`
+        <div class="top"><p class="eyebrow">Abmeldung — ${escapeHtml(state.standort)}</p><h1 class="display">Wer möchte sich abmelden?</h1></div>
+        <div class="step-body">${liste}</div>
+        <div class="step-nav"><button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button></div>
+      `);
+      root.querySelectorAll('.liste-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const eintrag = state.offeneEintraege.find(e => String(e.id) === btn.dataset.id && e.typ === btn.dataset.typ);
+          state.ausgewaehlt = eintrag;
+          render();
+        });
+      });
+      root.querySelector('#btn-zurueck').addEventListener('click', () => { state = leererState(); render(); });
+      return;
+    }
+
+    const hatOffenenSchluessel = state.ausgewaehlt.typ === 'handwerker' && !!state.ausgewaehlt.schluessel;
+    cardShell(`
+      <div class="top"><p class="eyebrow">Abmeldung</p><h1 class="display">Auf Wiedersehen, ${escapeHtml(state.ausgewaehlt.name)}?</h1></div>
+      <div class="step-body">
+        ${hatOffenenSchluessel ? `
+          <div class="review-zeile"><span>Schlüssel</span><span>${escapeHtml(state.ausgewaehlt.schluessel)}</span></div>
+          <div class="toggle-zeile"><input type="checkbox" id="chk-zurueck" ${state.schluesselZurueck ? 'checked' : ''} /><label for="chk-zurueck" style="margin:0">Schlüssel jetzt zurückgeben</label></div>
+        ` : ''}
+      </div>
+      <p class="error">${escapeHtml(state.error)}</p>
+      <div class="step-nav">
+        <button type="button" class="zurueck-btn" id="btn-zurueck">Zurück</button>
+        <button type="button" class="weiter-btn" id="btn-bestaetigen">${state.submitting ? 'Wird gespeichert…' : 'Abmelden'}</button>
+      </div>
+    `);
+    const chk = root.querySelector('#chk-zurueck');
+    if (chk) chk.addEventListener('change', e => { state.schluesselZurueck = e.target.checked; });
+    root.querySelector('#btn-zurueck').addEventListener('click', () => { state.ausgewaehlt = null; render(); });
+    root.querySelector('#btn-bestaetigen').addEventListener('click', () => submitAbmeldung());
+  }
+
+  async function submitAbmeldung() {
+    state.submitting = true; state.error = ''; render();
+    const { id, typ, name } = state.ausgewaehlt;
+    let ok = false, serverError = '';
+    try {
+      const res = await fetch(`/api/checkins/${typ}/${id}/abmelden`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': window.KIOSK_CONFIG.apiKey },
+        body: JSON.stringify({ standort: state.standort, schluessel_zurueck: state.schluesselZurueck })
+      });
+      ok = res.ok;
+      if (!ok) { const b = await res.json().catch(() => ({})); serverError = b.error || ''; }
+    } catch (e) { ok = false; }
+
+    if (!ok) {
+      state.submitting = false;
+      state.error = serverError || 'Abmelden fehlgeschlagen. Bitte erneut versuchen oder am Empfang melden.';
+      render();
+      return;
+    }
+
+    state = leererState();
+    state.fertig = { art: 'abmeldung', name };
+    render();
+  }
+
+  // --- Abschluss --------------------------------------------------------------
+
+  function renderFertig() {
+    const f = state.fertig;
+    const titel = f.art === 'abmeldung' ? `Auf Wiedersehen, ${escapeHtml(f.name)}!` : `Danke, ${escapeHtml(f.name)}!`;
+    const text = f.art === 'abmeldung'
+      ? 'Ihre Abmeldung wurde erfasst.'
+      : (f.rolle === 'besucher' ? 'Ihre Anmeldung wurde übermittelt.' : 'Ihre Anmeldung wurde erfasst.');
+    cardShell(`<div class="confirm"><div class="stamp">✓</div><h2 class="display">${titel}</h2><p>${text}</p></div>`);
+    setTimeout(() => { state = leererState(); render(); }, 4000);
   }
 
   function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = str == null ? '' : str;
     return div.innerHTML;
   }
+  function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
 
   render();
 })();

@@ -7,7 +7,10 @@ services:
     environment:
       PORT: 3000
       KIOSK_API_KEY: ${KIOSK_API_KEY}
-      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+      STANDORTE: ${STANDORTE}
+      STANDORT_DOMAINS: ${STANDORT_DOMAINS:-}
+      ADMIN_USERS: ${ADMIN_USERS}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       DB_PATH: /app/data/data.db
     volumes:

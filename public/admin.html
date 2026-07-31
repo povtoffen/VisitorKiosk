@@ -3,79 +3,59 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Verwaltung — Besucher & Schlüssel</title>
+<title>Verwaltung — Besucher &amp; Schlüssel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; }
   #app, #app * { box-sizing: border-box; }
   #app {
-    --ink: #1B2430;
-    --paper: #F4F0E6;
-    --paper-2: #EAE3D3;
-    --amber: #D98E3D;
-    --amber-deep: #B9701F;
-    --teal: #3E7075;
-    --teal-deep: #2C5257;
-    --line: #D8CFB8;
-    --danger: #B3492F;
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    background: var(--ink);
-    color: var(--paper);
-    padding: 32px 20px;
+    --ink: #1B2430; --paper: #F4F0E6; --paper-2: #EAE3D3;
+    --amber: #D98E3D; --amber-deep: #B9701F; --teal: #3E7075; --teal-deep: #2C5257;
+    --line: #D8CFB8; --danger: #B3492F;
+    font-family: 'Inter', sans-serif; min-height: 100vh; background: var(--ink); color: var(--paper); padding: 32px 20px;
   }
   #app .display { font-family: 'Space Grotesk', sans-serif; }
-  #app .wrap { max-width: 920px; margin: 0 auto; }
+  #app .wrap { max-width: 1040px; margin: 0 auto; }
   #app h1 { font-size: 24px; margin: 0 0 4px 0; }
   #app .eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #9AA3AE; margin: 0 0 4px 0; font-weight: 600; }
 
-  #app .login-card {
-    max-width: 380px; margin: 80px auto; background: var(--paper); color: var(--ink);
-    border-radius: 16px; padding: 28px; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
-  }
+  #app .login-card { max-width: 380px; margin: 80px auto; background: var(--paper); color: var(--ink);
+    border-radius: 16px; padding: 28px; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5); }
   #app .login-card h2 { margin-top: 0; font-size: 19px; }
-  #app input {
-    width: 100%; padding: 12px 13px; border-radius: 9px; border: 1.5px solid var(--line);
-    font-family: inherit; font-size: 15px; margin-bottom: 12px;
-  }
-  #app .btn {
-    padding: 12px 18px; border-radius: 9px; border: none; font-family: inherit;
-    font-size: 14px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber);
-  }
+  #app input, #app select { width: 100%; padding: 12px 13px; border-radius: 9px; border: 1.5px solid var(--line);
+    font-family: inherit; font-size: 15px; margin-bottom: 12px; }
+  #app .btn { padding: 12px 18px; border-radius: 9px; border: none; font-family: inherit;
+    font-size: 14px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); }
   #app .error { color: var(--danger); font-size: 13px; min-height: 16px; margin: -4px 0 12px 0; }
 
   #app .tabs { display: flex; gap: 8px; margin: 24px 0 16px 0; }
-  #app .tabs button {
-    padding: 10px 16px; border-radius: 9px; border: 1.5px solid #38414D; background: transparent;
-    color: var(--paper); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-  }
+  #app .tabs button { padding: 10px 16px; border-radius: 9px; border: 1.5px solid #38414D; background: transparent;
+    color: var(--paper); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
   #app .tabs button[data-active="true"] { background: var(--teal); border-color: var(--teal); }
 
   #app .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   #app .toolbar label { font-size: 13px; color: #C7CDD5; display: flex; align-items: center; gap: 6px; }
-  #app .toolbar select {
-    padding: 6px 10px; border-radius: 7px; border: 1.5px solid #38414D; background: #232D3A;
-    color: var(--paper); font-family: inherit; font-size: 13px;
-  }
-  #app .toolbar .refresh {
-    margin-left: auto; background: transparent; border: 1.5px solid #38414D; color: var(--paper);
-    padding: 8px 14px; border-radius: 8px; font-family: inherit; cursor: pointer; font-size: 13px;
-  }
+  #app .toolbar select { padding: 6px 10px; border-radius: 7px; border: 1.5px solid #38414D; background: #232D3A;
+    color: var(--paper); font-family: inherit; font-size: 13px; width: auto; margin: 0; }
+  #app .standort-label { font-size: 13px; color: #C7CDD5; background: #232D3A; padding: 6px 12px; border-radius: 7px; }
+  #app .toolbar .refresh { margin-left: auto; background: transparent; border: 1.5px solid #38414D; color: var(--paper);
+    padding: 8px 14px; border-radius: 8px; font-family: inherit; cursor: pointer; font-size: 13px; }
 
   #app table { width: 100%; border-collapse: collapse; background: var(--paper); color: var(--ink); border-radius: 12px; overflow: hidden; }
-  #app th, #app td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--line); }
+  #app th, #app td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
   #app th { background: var(--paper-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #6B6355; }
   #app tr:last-child td { border-bottom: none; }
   #app .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
   #app .pill.offen { background: rgba(217,142,61,0.18); color: var(--amber-deep); }
   #app .pill.ausgabe { background: rgba(62,112,117,0.18); color: var(--teal-deep); }
   #app .pill.rueckgabe { background: rgba(120,120,120,0.18); color: #5C5647; }
-  #app .action-btn {
-    padding: 6px 11px; border-radius: 7px; border: none; font-family: inherit; font-size: 12px;
-    font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber);
-  }
+  #app .action-btn { padding: 6px 11px; border-radius: 7px; border: none; font-family: inherit; font-size: 12px;
+    font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); margin-right: 4px; margin-bottom: 4px; }
+  #app .action-btn.sekundaer { background: transparent; border: 1.5px solid var(--line); color: #5C5647; }
   #app .empty { padding: 30px; text-align: center; color: #8A8272; background: var(--paper); border-radius: 12px; font-size: 14px; }
+  #app td input { padding: 7px 8px; font-size: 13px; margin-bottom: 0; border-radius: 6px; }
+  #app .actions-cell { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -83,23 +63,34 @@
 <script>
 (function() {
   const app = document.getElementById('app');
-  const state = { authed: false, key: '', tab: 'besucher', onlyOpen: true, standort: '', standorte: [], rows: [], loading: false, error: '' };
+  const state = {
+    admin: null, checkingSession: true,
+    tab: 'besucher', onlyOpen: true, standort: '', standorte: [],
+    rows: [], loading: false, error: '',
+    editingId: null, editDraft: {}
+  };
 
-  const storedKey = sessionStorage.getItem('admin_api_key');
-  if (storedKey) { state.key = storedKey; state.authed = true; }
+  function render() {
+    if (state.checkingSession) { app.innerHTML = `<div class="empty" style="margin-top:80px">Lädt…</div>`; return; }
+    if (!state.admin) { renderLogin(); return; }
+    renderDashboard();
+  }
+
+  async function init() {
+    try {
+      const res = await fetch('/api/admin/me');
+      if (res.ok) state.admin = await res.json();
+    } catch (e) { /* nicht angemeldet */ }
+    state.checkingSession = false;
+    render();
+    if (state.admin) { await ladeStandorte(); render(); loadData(); }
+  }
 
   async function ladeStandorte() {
     try {
       const res = await fetch('/api/standorte');
       state.standorte = res.ok ? await res.json() : [];
-    } catch (err) {
-      state.standorte = [];
-    }
-  }
-
-  function render() {
-    if (!state.authed) { renderLogin(); return; }
-    renderDashboard();
+    } catch (e) { state.standorte = []; }
   }
 
   function renderLogin() {
@@ -107,83 +98,91 @@
       <div class="login-card">
         <p class="eyebrow">Verwaltung</p>
         <h2 class="display">Anmelden</h2>
-        <input id="key-input" type="password" placeholder="Admin-Key" autocomplete="off" />
+        <input id="user-input" type="text" placeholder="Benutzername" autocomplete="off" />
+        <input id="pass-input" type="password" placeholder="Passwort" autocomplete="off" />
         <p class="error" id="login-error"></p>
         <button class="btn" id="login-btn">Anmelden</button>
       </div>
     `;
     app.querySelector('#login-btn').addEventListener('click', login);
-    app.querySelector('#key-input').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+    app.querySelector('#pass-input').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
   }
 
   async function login() {
-    const key = app.querySelector('#key-input').value.trim();
+    const username = app.querySelector('#user-input').value.trim();
+    const password = app.querySelector('#pass-input').value;
     const errorEl = app.querySelector('#login-error');
-    if (!key) { errorEl.textContent = 'Bitte Admin-Key eingeben.'; return; }
-    const res = await fetch('/api/besucher?offen=true', { headers: { 'x-api-key': key } });
-    if (!res.ok) { errorEl.textContent = 'Key ungültig.'; return; }
-    state.key = key;
-    state.authed = true;
-    sessionStorage.setItem('admin_api_key', key);
+    if (!username || !password) { errorEl.textContent = 'Bitte Benutzername und Passwort eingeben.'; return; }
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        errorEl.textContent = b.error || 'Anmeldung fehlgeschlagen.';
+        return;
+      }
+      state.admin = await res.json();
+    } catch (e) { errorEl.textContent = 'Anmeldung fehlgeschlagen.'; return; }
     await ladeStandorte();
     render();
     loadData();
   }
 
-  function logout() {
-    sessionStorage.removeItem('admin_api_key');
-    state.authed = false;
-    state.key = '';
+  async function logout() {
+    try { await fetch('/api/admin/logout', { method: 'POST' }); } catch (e) {}
+    state.admin = null;
     render();
   }
 
   function renderDashboard() {
+    const istSuperadmin = !state.admin.standort;
     app.innerHTML = `
       <div class="wrap">
-        <p class="eyebrow">Verwaltung</p>
+        <p class="eyebrow">Verwaltung — angemeldet als ${escapeHtml(state.admin.username)}</p>
         <h1 class="display">Besucher &amp; Schlüssel</h1>
         <div class="tabs">
           <button data-tab="besucher" data-active="${state.tab === 'besucher'}">Besucher</button>
-          <button data-tab="schluessel" data-active="${state.tab === 'schluessel'}">Schlüssel</button>
+          <button data-tab="handwerker" data-active="${state.tab === 'handwerker'}">Handwerker</button>
+          <button data-tab="schluessel" data-active="${state.tab === 'schluessel'}">Schlüssel-Log</button>
           <button style="margin-left:auto;background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="logout-btn">Abmelden</button>
         </div>
         <div class="toolbar">
-          <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'besucher' ? 'nur anwesende Besucher' : 'nur offene Schlüssel'}</label>
-          <select id="standort-filter">
-            <option value="">Alle Standorte</option>
-            ${state.standorte.map(s => `<option value="${escapeHtml(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
-          </select>
+          <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'schluessel' ? 'nur offene Schlüssel' : 'nur anwesende'}</label>
+          ${istSuperadmin
+            ? `<select id="standort-filter"><option value="">Alle Standorte</option>${state.standorte.map(s => `<option value="${escapeAttr(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
+            : `<span class="standort-label">${escapeHtml(state.admin.standort)}</span>`}
           <button class="refresh" id="refresh-btn">Aktualisieren</button>
         </div>
         <div id="table-container"></div>
       </div>
     `;
     app.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
-      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; loadData(); });
+      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; state.editingId = null; loadData(); });
     });
     app.querySelector('#logout-btn').addEventListener('click', logout);
-    app.querySelector('#only-open').addEventListener('change', (e) => { state.onlyOpen = e.target.checked; loadData(); });
-    app.querySelector('#standort-filter').addEventListener('change', (e) => { state.standort = e.target.value; loadData(); });
+    app.querySelector('#only-open').addEventListener('change', e => { state.onlyOpen = e.target.checked; loadData(); });
+    const standortFilter = app.querySelector('#standort-filter');
+    if (standortFilter) standortFilter.addEventListener('change', e => { state.standort = e.target.value; loadData(); });
     app.querySelector('#refresh-btn').addEventListener('click', loadData);
     renderTable();
   }
 
   async function loadData() {
-    state.loading = true;
+    state.loading = true; state.editingId = null;
     renderTable();
-    const endpoint = state.tab === 'besucher' ? '/api/besucher' : '/api/schluessel';
+    const endpoint = state.tab === 'besucher' ? '/api/besucher' : state.tab === 'handwerker' ? '/api/handwerker' : '/api/schluessel';
     const params = new URLSearchParams();
     if (state.onlyOpen) params.set('offen', 'true');
-    if (state.standort) params.set('standort', state.standort);
-    const query = params.toString() ? `?${params.toString()}` : '';
+    if (!state.admin.standort && state.standort) params.set('standort', state.standort);
     try {
-      const res = await fetch(endpoint + query, { headers: { 'x-api-key': state.key } });
-      if (res.status === 401) { logout(); return; }
+      const res = await fetch(`${endpoint}?${params.toString()}`);
+      if (res.status === 401) { state.admin = null; render(); return; }
       state.rows = await res.json();
       state.error = '';
-    } catch (err) {
-      state.error = 'Daten konnten nicht geladen werden.';
-    }
+    } catch (e) { state.error = 'Daten konnten nicht geladen werden.'; }
     state.loading = false;
     renderTable();
   }
@@ -192,71 +191,157 @@
     const container = app.querySelector('#table-container');
     if (!container) return;
     if (state.loading) { container.innerHTML = `<div class="empty">Lädt…</div>`; return; }
-    if (state.error) { container.innerHTML = `<div class="empty">${state.error}</div>`; return; }
+    if (state.error) { container.innerHTML = `<div class="empty">${escapeHtml(state.error)}</div>`; return; }
     if (!state.rows.length) { container.innerHTML = `<div class="empty">Keine Einträge.</div>`; return; }
 
-    if (state.tab === 'besucher') {
-      container.innerHTML = `
-        <table>
-          <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Ansprechpartner</th><th>Grund</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
-          <tbody>
-            ${state.rows.map(r => `
-              <tr>
+    if (state.tab === 'besucher') return renderBesucherTabelle(container);
+    if (state.tab === 'handwerker') return renderHandwerkerTabelle(container);
+    return renderSchluesselTabelle(container);
+  }
+
+  function editZeile(felder) {
+    return felder.map(f => `<input data-feld="${f.feld}" value="${escapeAttr(state.editDraft[f.feld] ?? '')}" placeholder="${escapeAttr(f.placeholder || '')}" />`).join('');
+  }
+
+  function renderBesucherTabelle(container) {
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Ansprechpartner</th><th>Grund</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${state.rows.map(r => {
+            if (state.editingId === r.id) {
+              return `<tr>
                 <td>${escapeHtml(r.standort)}</td>
-                <td>${escapeHtml(r.name)}</td>
-                <td>${escapeHtml(r.firma || '—')}</td>
-                <td>${escapeHtml(r.ansprechpartner)}</td>
-                <td>${escapeHtml(r.grund || '—')}</td>
+                <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
+                <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
+                <td><input data-feld="ansprechpartner" value="${escapeAttr(state.editDraft.ansprechpartner ?? '')}" /></td>
+                <td><input data-feld="grund" value="${escapeAttr(state.editDraft.grund ?? '')}" /></td>
                 <td>${formatTime(r.angemeldet_um)}</td>
                 <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
-                <td>${r.abgemeldet_um ? '' : `<button class="action-btn" data-id="${r.id}">Abmelden</button>`}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-      container.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', () => abmelden(btn.dataset.id));
-      });
-    } else {
-      container.innerHTML = `
-        <table>
-          <thead><tr><th>Standort</th><th>Schlüssel</th><th>Name</th><th>Firma</th><th>Vorgang</th><th>Zeitpunkt</th><th></th></tr></thead>
-          <tbody>
-            ${state.rows.map(r => `
-              <tr>
+                <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
+              </tr>`;
+            }
+            return `<tr>
+              <td>${escapeHtml(r.standort)}</td>
+              <td>${escapeHtml(r.name)}</td>
+              <td>${escapeHtml(r.firma || '—')}</td>
+              <td>${escapeHtml(r.ansprechpartner)}</td>
+              <td>${escapeHtml(r.grund || '—')}</td>
+              <td>${formatTime(r.angemeldet_um)}</td>
+              <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
+              <td class="actions-cell">
+                <button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>
+                ${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+    bindZeilenAktionen(container, 'besucher', ['name', 'firma', 'ansprechpartner', 'grund']);
+  }
+
+  function renderHandwerkerTabelle(container) {
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Schlüssel</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${state.rows.map(r => {
+            if (state.editingId === r.id) {
+              return `<tr>
                 <td>${escapeHtml(r.standort)}</td>
-                <td>${escapeHtml(r.schluessel)}</td>
-                <td>${escapeHtml(r.name)}</td>
-                <td>${escapeHtml(r.firma || '—')}</td>
-                <td><span class="pill ${r.richtung}">${r.richtung === 'ausgabe' ? 'ausgegeben' : 'zurückgegeben'}</span></td>
-                <td>${formatTime(r.zeitpunkt)}</td>
-                <td>${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-id="${r.id}">Zurückgeben</button>` : ''}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-      container.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', () => zurueckgeben(btn.dataset.id));
+                <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
+                <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
+                <td><input data-feld="schluessel" value="${escapeAttr(state.editDraft.schluessel ?? '')}" /></td>
+                <td>${formatTime(r.angemeldet_um)}</td>
+                <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
+                <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
+              </tr>`;
+            }
+            return `<tr>
+              <td>${escapeHtml(r.standort)}</td>
+              <td>${escapeHtml(r.name)}</td>
+              <td>${escapeHtml(r.firma || '—')}</td>
+              <td>${escapeHtml(r.schluessel || '—')}</td>
+              <td>${formatTime(r.angemeldet_um)}</td>
+              <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
+              <td class="actions-cell">
+                <button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>
+                ${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+    bindZeilenAktionen(container, 'handwerker', ['name', 'firma', 'schluessel']);
+  }
+
+  function renderSchluesselTabelle(container) {
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Standort</th><th>Schlüssel</th><th>Name</th><th>Firma</th><th>Vorgang</th><th>Zeitpunkt</th><th></th></tr></thead>
+        <tbody>
+          ${state.rows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.standort)}</td>
+              <td>${escapeHtml(r.schluessel)}</td>
+              <td>${escapeHtml(r.name)}</td>
+              <td>${escapeHtml(r.firma || '—')}</td>
+              <td><span class="pill ${r.richtung}">${r.richtung === 'ausgabe' ? 'ausgegeben' : 'zurückgegeben'}</span></td>
+              <td>${formatTime(r.zeitpunkt)}</td>
+              <td>${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-zurueckgeben="${r.id}">Zurückgeben</button>` : ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    container.querySelectorAll('[data-zurueckgeben]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await fetch(`/api/schluessel/${btn.dataset.zurueckgeben}/zurueckgeben`, { method: 'PATCH' });
+        loadData();
       });
-    }
+    });
   }
 
-  async function abmelden(id) {
-    await fetch(`/api/besucher/${id}/abmelden`, { method: 'PATCH', headers: { 'x-api-key': state.key } });
-    loadData();
-  }
-
-  async function zurueckgeben(id) {
-    await fetch(`/api/schluessel/${id}/zurueckgeben`, { method: 'PATCH', headers: { 'x-api-key': state.key } });
-    loadData();
+  function bindZeilenAktionen(container, typ, editFelder) {
+    container.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = state.rows.find(r => r.id === Number(btn.dataset.edit));
+        state.editingId = row.id;
+        state.editDraft = {};
+        editFelder.forEach(f => { state.editDraft[f] = row[f] || ''; });
+        renderTable();
+      });
+    });
+    container.querySelectorAll('[data-cancel]').forEach(btn => {
+      btn.addEventListener('click', () => { state.editingId = null; renderTable(); });
+    });
+    container.querySelectorAll('[data-save]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const zeile = btn.closest('tr');
+        const body = {};
+        zeile.querySelectorAll('input[data-feld]').forEach(input => { body[input.dataset.feld] = input.value; });
+        await fetch(`/api/${typ}/${btn.dataset.save}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        state.editingId = null;
+        loadData();
+      });
+    });
+    container.querySelectorAll('[data-abmelden]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await fetch(`/api/${typ}/${btn.dataset.abmelden}/abmelden`, { method: 'PATCH' });
+        loadData();
+      });
+    });
   }
 
   function formatTime(iso) {
     if (!iso) return '—';
-    const d = new Date(iso);
-    return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   }
 
   function escapeHtml(str) {
@@ -264,9 +349,9 @@
     div.textContent = str == null ? '' : str;
     return div.innerHTML;
   }
+  function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
 
-  render();
-  if (state.authed) loadData();
+  init();
 })();
 </script>
 </body>
