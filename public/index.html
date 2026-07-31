@@ -432,15 +432,19 @@
     const formEl = root.querySelector('#wizard-form');
     if (formEl) formEl.addEventListener('submit', e => {
       e.preventDefault();
-      weiterAktionAusfuehren(weiterAktion, weiterAktiv);
+      weiterAktionAusfuehren(weiterAktion);
     });
 
     root.querySelector('#btn-zurueck').addEventListener('click', () => goBack());
-    root.querySelector('#btn-weiter').addEventListener('click', () => weiterAktionAusfuehren(weiterAktion, weiterAktiv));
+    root.querySelector('#btn-weiter').addEventListener('click', () => weiterAktionAusfuehren(weiterAktion));
   }
 
-  function weiterAktionAusfuehren(weiterAktion, weiterAktiv) {
-    if (!weiterAktiv) return;
+  function weiterAktionAusfuehren(weiterAktion) {
+    // Bewusst kein übergebenes/eingefrorenes "weiterAktiv" verwenden — das wäre
+    // beim Tippen (nur syncWeiterButton() aktualisiert die Optik) veraltet und
+    // hätte den Klick fälschlich blockiert. Stattdessen live aus dem DOM lesen.
+    const btn = root.querySelector('#btn-weiter');
+    if (btn && btn.disabled) return;
     if (weiterAktion === 'absenden') { submitAnmeldung(); return; }
     state.error = '';
     state.stepIndex++;
