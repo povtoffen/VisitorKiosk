@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Verwaltung — Besucher &amp; Schlüssel</title>
+<title>Dashboard — Besucher &amp; Schlüssel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -12,32 +12,39 @@
   #app {
     --ink: #1B2430; --paper: #F4F0E6; --paper-2: #EAE3D3;
     --amber: #D98E3D; --amber-deep: #B9701F; --teal: #3E7075; --teal-deep: #2C5257;
-    --line: #D8CFB8; --danger: #B3492F;
+    --line: #D8CFB8; --danger: #B3492F; --ok: #4C7A4C;
     font-family: 'Inter', sans-serif; min-height: 100vh; background: var(--ink); color: var(--paper); padding: 32px 20px;
   }
   #app .display { font-family: 'Space Grotesk', sans-serif; }
-  #app .wrap { max-width: 1040px; margin: 0 auto; }
+  #app .wrap { max-width: 1100px; margin: 0 auto; }
   #app h1 { font-size: 24px; margin: 0 0 4px 0; }
+  #app h3 { font-size: 15px; margin: 0 0 10px 0; }
   #app .eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #9AA3AE; margin: 0 0 4px 0; font-weight: 600; }
 
   #app .login-card { max-width: 380px; margin: 80px auto; background: var(--paper); color: var(--ink);
     border-radius: 16px; padding: 28px; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5); }
   #app .login-card h2 { margin-top: 0; font-size: 19px; }
-  #app input, #app select { width: 100%; padding: 12px 13px; border-radius: 9px; border: 1.5px solid var(--line);
-    font-family: inherit; font-size: 15px; margin-bottom: 12px; }
-  #app .btn { padding: 12px 18px; border-radius: 9px; border: none; font-family: inherit;
-    font-size: 14px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); }
-  #app .error { color: var(--danger); font-size: 13px; min-height: 16px; margin: -4px 0 12px 0; }
+  #app input, #app select { padding: 11px 12px; border-radius: 9px; border: 1.5px solid var(--line);
+    font-family: inherit; font-size: 14px; }
+  #app .login-card input { width: 100%; margin-bottom: 12px; }
+  #app .btn { padding: 11px 16px; border-radius: 9px; border: none; font-family: inherit;
+    font-size: 13px; font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); }
+  #app .btn.sekundaer { background: transparent; border: 1.5px solid var(--line); color: #5C5647; }
+  #app .btn.gefahr { background: var(--danger); color: #fff; }
+  #app .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #app .error { color: var(--danger); font-size: 13px; min-height: 16px; margin: 4px 0; }
+  #app .ok-msg { color: var(--ok); font-size: 13px; min-height: 16px; margin: 4px 0; }
 
-  #app .tabs { display: flex; gap: 8px; margin: 24px 0 16px 0; }
-  #app .tabs button { padding: 10px 16px; border-radius: 9px; border: 1.5px solid #38414D; background: transparent;
-    color: var(--paper); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #app .tabgruppe { margin: 20px 0 6px 0; }
+  #app .tabgruppe-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #6E7987; margin-bottom: 6px; }
+  #app .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  #app .tabs button { padding: 9px 14px; border-radius: 9px; border: 1.5px solid #38414D; background: transparent;
+    color: var(--paper); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   #app .tabs button[data-active="true"] { background: var(--teal); border-color: var(--teal); }
 
-  #app .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  #app .toolbar { display: flex; align-items: center; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
   #app .toolbar label { font-size: 13px; color: #C7CDD5; display: flex; align-items: center; gap: 6px; }
-  #app .toolbar select { padding: 6px 10px; border-radius: 7px; border: 1.5px solid #38414D; background: #232D3A;
-    color: var(--paper); font-family: inherit; font-size: 13px; width: auto; margin: 0; }
+  #app .toolbar select, #app .toolbar input { background: #232D3A; color: var(--paper); border: 1.5px solid #38414D; }
   #app .standort-label { font-size: 13px; color: #C7CDD5; background: #232D3A; padding: 6px 12px; border-radius: 7px; }
   #app .toolbar .refresh { margin-left: auto; background: transparent; border: 1.5px solid #38414D; color: var(--paper);
     padding: 8px 14px; border-radius: 8px; font-family: inherit; cursor: pointer; font-size: 13px; }
@@ -53,9 +60,21 @@
   #app .action-btn { padding: 6px 11px; border-radius: 7px; border: none; font-family: inherit; font-size: 12px;
     font-weight: 700; cursor: pointer; color: #2A1C0B; background: var(--amber); margin-right: 4px; margin-bottom: 4px; }
   #app .action-btn.sekundaer { background: transparent; border: 1.5px solid var(--line); color: #5C5647; }
+  #app .action-btn.gefahr { background: var(--danger); color: #fff; }
   #app .empty { padding: 30px; text-align: center; color: #8A8272; background: var(--paper); border-radius: 12px; font-size: 14px; }
-  #app td input { padding: 7px 8px; font-size: 13px; margin-bottom: 0; border-radius: 6px; }
+  #app td input, #app td select { padding: 7px 8px; font-size: 13px; border-radius: 6px; }
   #app .actions-cell { white-space: nowrap; }
+
+  #app .panel { background: var(--paper); color: var(--ink); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  #app .formzeile { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  #app .formzeile input, #app .formzeile select { flex: 1; min-width: 140px; }
+  #app .karten-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  #app .standort-karte { border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; }
+  #app .standort-karte .vorschau { width: 100%; height: 90px; border-radius: 8px; background: var(--paper-2) center/cover no-repeat;
+    margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #8A8272; font-size: 12px; }
+  #app .standort-karte .name { font-weight: 700; margin-bottom: 8px; }
+  #app .standort-karte input[type="text"] { width: 100%; margin-bottom: 8px; }
+  #app .hinweis { font-size: 12px; color: #8A8272; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -63,11 +82,27 @@
 <script>
 (function() {
   const app = document.getElementById('app');
+  const OPERATIVE_TABS = [
+    { id: 'besucher', label: 'Besucher' },
+    { id: 'handwerker', label: 'Handwerker' },
+    { id: 'schluessel', label: 'Schlüssel-Log' },
+    { id: 'export', label: 'Export' }
+  ];
+  const VERWALTUNG_TABS = [
+    { id: 'standorte', label: 'Standorte' },
+    { id: 'domains', label: 'Domains' },
+    { id: 'nutzer', label: 'Nutzer' },
+    { id: 'kunden', label: 'Kunden' },
+    { id: 'aktivitaet', label: 'Aktivität' }
+  ];
+
   const state = {
     admin: null, checkingSession: true,
     tab: 'besucher', onlyOpen: true, standort: '', standorte: [],
-    rows: [], loading: false, error: '',
-    editingId: null, editDraft: {}
+    rows: [], loading: false, error: '', okMsg: '',
+    editingId: null, editDraft: {},
+    firmen: [], exportFirma: '', exportVon: '', exportBis: '', smtpKonfiguriert: false, exportBusy: false, exportMsg: '',
+    kunden: [], nutzer: [], domains: [], auditLog: []
   };
 
   function render() {
@@ -80,15 +115,21 @@
     try {
       const res = await fetch('/api/admin/me');
       if (res.ok) state.admin = await res.json();
-    } catch (e) { /* nicht angemeldet */ }
+    } catch (e) {}
     state.checkingSession = false;
     render();
-    if (state.admin) { await ladeStandorte(); render(); loadData(); }
+    if (state.admin) { await nachLogin(); }
   }
 
-  async function ladeStandorte() {
+  async function nachLogin() {
+    if (!state.admin.standort_id) await ladeStandorteListe();
+    render();
+    loadTabData();
+  }
+
+  async function ladeStandorteListe() {
     try {
-      const res = await fetch('/api/standorte');
+      const res = await fetch('/api/dashboard/standorte');
       state.standorte = res.ok ? await res.json() : [];
     } catch (e) { state.standorte = []; }
   }
@@ -96,10 +137,10 @@
   function renderLogin() {
     app.innerHTML = `
       <div class="login-card">
-        <p class="eyebrow">Verwaltung</p>
+        <p class="eyebrow">Dashboard</p>
         <h2 class="display">Anmelden</h2>
-        <input id="user-input" type="text" placeholder="Benutzername" autocomplete="off" />
-        <input id="pass-input" type="password" placeholder="Passwort" autocomplete="off" />
+        <input id="user-input" type="text" placeholder="Benutzername" autocomplete="username" />
+        <input id="pass-input" type="password" placeholder="Passwort" autocomplete="current-password" />
         <p class="error" id="login-error"></p>
         <button class="btn" id="login-btn">Anmelden</button>
       </div>
@@ -114,21 +155,11 @@
     const errorEl = app.querySelector('#login-error');
     if (!username || !password) { errorEl.textContent = 'Bitte Benutzername und Passwort eingeben.'; return; }
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({}));
-        errorEl.textContent = b.error || 'Anmeldung fehlgeschlagen.';
-        return;
-      }
+      const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errorEl.textContent = b.error || 'Anmeldung fehlgeschlagen.'; return; }
       state.admin = await res.json();
     } catch (e) { errorEl.textContent = 'Anmeldung fehlgeschlagen.'; return; }
-    await ladeStandorte();
-    render();
-    loadData();
+    await nachLogin();
   }
 
   async function logout() {
@@ -137,46 +168,77 @@
     render();
   }
 
+  function istSuperadmin() { return !state.admin.standort_id; }
+
   function renderDashboard() {
-    const istSuperadmin = !state.admin.standort;
     app.innerHTML = `
       <div class="wrap">
-        <p class="eyebrow">Verwaltung — angemeldet als ${escapeHtml(state.admin.username)}</p>
+        <p class="eyebrow">Dashboard — angemeldet als ${escapeHtml(state.admin.username)}${istSuperadmin() ? ' (Superadmin)' : ''}</p>
         <h1 class="display">Besucher &amp; Schlüssel</h1>
-        <div class="tabs">
-          <button data-tab="besucher" data-active="${state.tab === 'besucher'}">Besucher</button>
-          <button data-tab="handwerker" data-active="${state.tab === 'handwerker'}">Handwerker</button>
-          <button data-tab="schluessel" data-active="${state.tab === 'schluessel'}">Schlüssel-Log</button>
-          <button style="margin-left:auto;background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="logout-btn">Abmelden</button>
+
+        <div class="tabgruppe">
+          <div class="tabgruppe-label">Betrieb</div>
+          <div class="tabs" id="tabs-operativ">${OPERATIVE_TABS.map(t => `<button data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}
+            <button style="margin-left:auto;background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="passwort-btn">Mein Passwort ändern</button>
+            <button style="background:transparent;border:1.5px solid #38414D;color:#C7CDD5" id="logout-btn">Abmelden</button>
+          </div>
         </div>
-        <div class="toolbar">
-          <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'schluessel' ? 'nur offene Schlüssel' : 'nur anwesende'}</label>
-          ${istSuperadmin
-            ? `<select id="standort-filter"><option value="">Alle Standorte</option>${state.standorte.map(s => `<option value="${escapeAttr(s)}" ${s === state.standort ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
-            : `<span class="standort-label">${escapeHtml(state.admin.standort)}</span>`}
-          <button class="refresh" id="refresh-btn">Aktualisieren</button>
-        </div>
-        <div id="table-container"></div>
+        ${istSuperadmin() ? `
+        <div class="tabgruppe">
+          <div class="tabgruppe-label">Zentrale Verwaltung</div>
+          <div class="tabs" id="tabs-verwaltung">${VERWALTUNG_TABS.map(t => `<button data-tab="${t.id}" data-active="${state.tab === t.id}">${t.label}</button>`).join('')}</div>
+        </div>` : ''}
+
+        <div id="tab-content"></div>
       </div>
     `;
     app.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
-      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; state.editingId = null; loadData(); });
+      btn.addEventListener('click', () => { state.tab = btn.dataset.tab; state.editingId = null; state.error = ''; state.okMsg = ''; render(); loadTabData(); });
     });
     app.querySelector('#logout-btn').addEventListener('click', logout);
-    app.querySelector('#only-open').addEventListener('change', e => { state.onlyOpen = e.target.checked; loadData(); });
-    const standortFilter = app.querySelector('#standort-filter');
-    if (standortFilter) standortFilter.addEventListener('change', e => { state.standort = e.target.value; loadData(); });
-    app.querySelector('#refresh-btn').addEventListener('click', loadData);
-    renderTable();
+    app.querySelector('#passwort-btn').addEventListener('click', eigenesPasswortAendern);
+    renderTabContent();
   }
 
-  async function loadData() {
+  async function eigenesPasswortAendern() {
+    const neu = prompt('Neues Passwort (mind. 8 Zeichen):');
+    if (!neu) return;
+    const res = await fetch('/api/admin/passwort', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ neuesPasswort: neu }) });
+    const b = await res.json().catch(() => ({}));
+    alert(res.ok ? 'Passwort wurde geändert.' : (b.error || 'Fehler beim Ändern.'));
+  }
+
+  function loadTabData() {
+    if (['besucher', 'handwerker', 'schluessel'].includes(state.tab)) return loadListe();
+    if (state.tab === 'export') return loadExportTab();
+    if (state.tab === 'standorte') return loadStandorteTab();
+    if (state.tab === 'domains') return loadDomainsTab();
+    if (state.tab === 'nutzer') return loadNutzerTab();
+    if (state.tab === 'kunden') return loadKundenTab();
+    if (state.tab === 'aktivitaet') return loadAktivitaetTab();
+  }
+
+  function renderTabContent() {
+    const c = app.querySelector('#tab-content');
+    if (!c) return;
+    if (['besucher', 'handwerker', 'schluessel'].includes(state.tab)) return renderOperativTab(c);
+    if (state.tab === 'export') return renderExportTab(c);
+    if (state.tab === 'standorte') return renderStandorteTab(c);
+    if (state.tab === 'domains') return renderDomainsTab(c);
+    if (state.tab === 'nutzer') return renderNutzerTab(c);
+    if (state.tab === 'kunden') return renderKundenTab(c);
+    if (state.tab === 'aktivitaet') return renderAktivitaetTab(c);
+  }
+
+  // ===== Betrieb: Besucher / Handwerker / Schlüssel-Log =====================
+
+  async function loadListe() {
     state.loading = true; state.editingId = null;
-    renderTable();
+    renderTabContent();
     const endpoint = state.tab === 'besucher' ? '/api/besucher' : state.tab === 'handwerker' ? '/api/handwerker' : '/api/schluessel';
     const params = new URLSearchParams();
     if (state.onlyOpen) params.set('offen', 'true');
-    if (!state.admin.standort && state.standort) params.set('standort', state.standort);
+    if (istSuperadmin() && state.standort) params.set('standort', state.standort);
     try {
       const res = await fetch(`${endpoint}?${params.toString()}`);
       if (res.status === 401) { state.admin = null; render(); return; }
@@ -184,23 +246,40 @@
       state.error = '';
     } catch (e) { state.error = 'Daten konnten nicht geladen werden.'; }
     state.loading = false;
-    renderTable();
+    renderTabContent();
   }
 
-  function renderTable() {
+  function standortFilterHtml() {
+    return istSuperadmin()
+      ? `<select id="standort-filter"><option value="">Alle Standorte</option>${state.standorte.map(s => `<option value="${escapeAttr(s.name)}" ${s.name === state.standort ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}</select>`
+      : `<span class="standort-label">${escapeHtml(state.admin.standort)}</span>`;
+  }
+
+  function renderOperativTab(container) {
+    container.innerHTML = `
+      <div class="toolbar">
+        <label><input type="checkbox" id="only-open" ${state.onlyOpen ? 'checked' : ''}/> ${state.tab === 'schluessel' ? 'nur offene Schlüssel' : 'nur anwesende'}</label>
+        ${standortFilterHtml()}
+        <button class="refresh" id="refresh-btn">Aktualisieren</button>
+      </div>
+      <div id="table-container"></div>
+    `;
+    container.querySelector('#only-open').addEventListener('change', e => { state.onlyOpen = e.target.checked; loadListe(); });
+    const sf = container.querySelector('#standort-filter');
+    if (sf) sf.addEventListener('change', e => { state.standort = e.target.value; loadListe(); });
+    container.querySelector('#refresh-btn').addEventListener('click', loadListe);
+    renderListeTabelle();
+  }
+
+  function renderListeTabelle() {
     const container = app.querySelector('#table-container');
     if (!container) return;
     if (state.loading) { container.innerHTML = `<div class="empty">Lädt…</div>`; return; }
     if (state.error) { container.innerHTML = `<div class="empty">${escapeHtml(state.error)}</div>`; return; }
     if (!state.rows.length) { container.innerHTML = `<div class="empty">Keine Einträge.</div>`; return; }
-
     if (state.tab === 'besucher') return renderBesucherTabelle(container);
     if (state.tab === 'handwerker') return renderHandwerkerTabelle(container);
     return renderSchluesselTabelle(container);
-  }
-
-  function editZeile(felder) {
-    return felder.map(f => `<input data-feld="${f.feld}" value="${escapeAttr(state.editDraft[f.feld] ?? '')}" placeholder="${escapeAttr(f.placeholder || '')}" />`).join('');
   }
 
   function renderBesucherTabelle(container) {
@@ -208,33 +287,23 @@
       <table>
         <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Ansprechpartner</th><th>Grund</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
         <tbody>
-          ${state.rows.map(r => {
-            if (state.editingId === r.id) {
-              return `<tr>
-                <td>${escapeHtml(r.standort)}</td>
-                <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
-                <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
-                <td><input data-feld="ansprechpartner" value="${escapeAttr(state.editDraft.ansprechpartner ?? '')}" /></td>
-                <td><input data-feld="grund" value="${escapeAttr(state.editDraft.grund ?? '')}" /></td>
-                <td>${formatTime(r.angemeldet_um)}</td>
-                <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
-                <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
-              </tr>`;
-            }
-            return `<tr>
+          ${state.rows.map(r => state.editingId === r.id ? `
+            <tr>
               <td>${escapeHtml(r.standort)}</td>
-              <td>${escapeHtml(r.name)}</td>
-              <td>${escapeHtml(r.firma || '—')}</td>
-              <td>${escapeHtml(r.ansprechpartner)}</td>
-              <td>${escapeHtml(r.grund || '—')}</td>
+              <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
+              <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
+              <td><input data-feld="ansprechpartner" value="${escapeAttr(state.editDraft.ansprechpartner ?? '')}" /></td>
+              <td><input data-feld="grund" value="${escapeAttr(state.editDraft.grund ?? '')}" /></td>
               <td>${formatTime(r.angemeldet_um)}</td>
               <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
-              <td class="actions-cell">
-                <button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>
-                ${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}
-              </td>
-            </tr>`;
-          }).join('')}
+              <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
+            </tr>` : `
+            <tr>
+              <td>${escapeHtml(r.standort)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.firma || '—')}</td>
+              <td>${escapeHtml(r.ansprechpartner)}</td><td>${escapeHtml(r.grund || '—')}</td><td>${formatTime(r.angemeldet_um)}</td>
+              <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
+              <td class="actions-cell"><button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}</td>
+            </tr>`).join('')}
         </tbody>
       </table>
     `;
@@ -246,31 +315,22 @@
       <table>
         <thead><tr><th>Standort</th><th>Name</th><th>Firma</th><th>Schlüssel</th><th>Angemeldet</th><th>Status</th><th></th></tr></thead>
         <tbody>
-          ${state.rows.map(r => {
-            if (state.editingId === r.id) {
-              return `<tr>
-                <td>${escapeHtml(r.standort)}</td>
-                <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
-                <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
-                <td><input data-feld="schluessel" value="${escapeAttr(state.editDraft.schluessel ?? '')}" /></td>
-                <td>${formatTime(r.angemeldet_um)}</td>
-                <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
-                <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
-              </tr>`;
-            }
-            return `<tr>
+          ${state.rows.map(r => state.editingId === r.id ? `
+            <tr>
               <td>${escapeHtml(r.standort)}</td>
-              <td>${escapeHtml(r.name)}</td>
-              <td>${escapeHtml(r.firma || '—')}</td>
-              <td>${escapeHtml(r.schluessel || '—')}</td>
+              <td><input data-feld="name" value="${escapeAttr(state.editDraft.name ?? '')}" /></td>
+              <td><input data-feld="firma" value="${escapeAttr(state.editDraft.firma ?? '')}" /></td>
+              <td><input data-feld="schluessel" value="${escapeAttr(state.editDraft.schluessel ?? '')}" /></td>
               <td>${formatTime(r.angemeldet_um)}</td>
               <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
-              <td class="actions-cell">
-                <button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>
-                ${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}
-              </td>
-            </tr>`;
-          }).join('')}
+              <td class="actions-cell"><button class="action-btn" data-save="${r.id}">Speichern</button><button class="action-btn sekundaer" data-cancel="1">Abbrechen</button></td>
+            </tr>` : `
+            <tr>
+              <td>${escapeHtml(r.standort)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.firma || '—')}</td>
+              <td>${escapeHtml(r.schluessel || '—')}</td><td>${formatTime(r.angemeldet_um)}</td>
+              <td>${r.abgemeldet_um ? 'abgemeldet' : '<span class="pill offen">anwesend</span>'}</td>
+              <td class="actions-cell"><button class="action-btn sekundaer" data-edit="${r.id}">Bearbeiten</button>${r.abgemeldet_um ? '' : `<button class="action-btn" data-abmelden="${r.id}">Abmelden</button>`}</td>
+            </tr>`).join('')}
         </tbody>
       </table>
     `;
@@ -284,23 +344,16 @@
         <tbody>
           ${state.rows.map(r => `
             <tr>
-              <td>${escapeHtml(r.standort)}</td>
-              <td>${escapeHtml(r.schluessel)}</td>
-              <td>${escapeHtml(r.name)}</td>
-              <td>${escapeHtml(r.firma || '—')}</td>
+              <td>${escapeHtml(r.standort)}</td><td>${escapeHtml(r.schluessel)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.firma || '—')}</td>
               <td><span class="pill ${r.richtung}">${r.richtung === 'ausgabe' ? 'ausgegeben' : 'zurückgegeben'}</span></td>
               <td>${formatTime(r.zeitpunkt)}</td>
               <td>${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-zurueckgeben="${r.id}">Zurückgeben</button>` : ''}</td>
-            </tr>
-          `).join('')}
+            </tr>`).join('')}
         </tbody>
       </table>
     `;
     container.querySelectorAll('[data-zurueckgeben]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await fetch(`/api/schluessel/${btn.dataset.zurueckgeben}/zurueckgeben`, { method: 'PATCH' });
-        loadData();
-      });
+      btn.addEventListener('click', async () => { await fetch(`/api/schluessel/${btn.dataset.zurueckgeben}/zurueckgeben`, { method: 'PATCH' }); loadListe(); });
     });
   }
 
@@ -311,39 +364,383 @@
         state.editingId = row.id;
         state.editDraft = {};
         editFelder.forEach(f => { state.editDraft[f] = row[f] || ''; });
-        renderTable();
+        renderListeTabelle();
       });
     });
-    container.querySelectorAll('[data-cancel]').forEach(btn => {
-      btn.addEventListener('click', () => { state.editingId = null; renderTable(); });
-    });
+    container.querySelectorAll('[data-cancel]').forEach(btn => btn.addEventListener('click', () => { state.editingId = null; renderListeTabelle(); }));
     container.querySelectorAll('[data-save]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const zeile = btn.closest('tr');
         const body = {};
-        zeile.querySelectorAll('input[data-feld]').forEach(input => { body[input.dataset.feld] = input.value; });
-        await fetch(`/api/${typ}/${btn.dataset.save}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+        btn.closest('tr').querySelectorAll('input[data-feld]').forEach(input => { body[input.dataset.feld] = input.value; });
+        await fetch(`/api/${typ}/${btn.dataset.save}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         state.editingId = null;
-        loadData();
+        loadListe();
       });
     });
     container.querySelectorAll('[data-abmelden]').forEach(btn => {
+      btn.addEventListener('click', async () => { await fetch(`/api/${typ}/${btn.dataset.abmelden}/abmelden`, { method: 'PATCH' }); loadListe(); });
+    });
+  }
+
+  // ===== Export ==============================================================
+
+  async function loadExportTab() {
+    try {
+      const [firmenRes, smtpRes] = await Promise.all([
+        fetch(`/api/export/firmen${istSuperadmin() && state.standort ? '?standort=' + encodeURIComponent(state.standort) : ''}`),
+        fetch('/api/smtp-status')
+      ]);
+      state.firmen = firmenRes.ok ? await firmenRes.json() : [];
+      state.smtpKonfiguriert = smtpRes.ok ? (await smtpRes.json()).konfiguriert : false;
+    } catch (e) { state.firmen = []; }
+    renderTabContent();
+  }
+
+  function renderExportTab(container) {
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Schlüssel-Übersicht exportieren</h3>
+        <div class="formzeile">
+          ${istSuperadmin() ? `<select id="ex-standort"><option value="">Standort wählen…</option>${state.standorte.map(s => `<option value="${escapeAttr(s.name)}" ${s.name === state.standort ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}</select>` : `<span class="standort-label">${escapeHtml(state.admin.standort)}</span>`}
+          <select id="ex-firma"><option value="">Alle Firmen</option>${state.firmen.map(f => `<option value="${escapeAttr(f)}" ${f === state.exportFirma ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}</select>
+          <input type="date" id="ex-von" value="${escapeAttr(state.exportVon)}" />
+          <input type="date" id="ex-bis" value="${escapeAttr(state.exportBis)}" />
+        </div>
+        <div class="formzeile">
+          <button class="btn" id="ex-download">CSV herunterladen</button>
+          <button class="btn sekundaer" id="ex-senden" ${state.smtpKonfiguriert ? '' : 'disabled'}>Per E-Mail an Kunde senden</button>
+        </div>
+        ${state.smtpKonfiguriert ? '' : '<p class="hinweis">E-Mail-Versand ist nicht konfiguriert (SMTP_*-Variablen fehlen) — nur CSV-Download verfügbar.</p>'}
+        <p class="error">${escapeHtml(state.exportMsg && !state.exportMsg.startsWith('OK:') ? state.exportMsg : '')}</p>
+        <p class="ok-msg">${escapeHtml(state.exportMsg && state.exportMsg.startsWith('OK:') ? state.exportMsg.slice(3) : '')}</p>
+      </div>
+    `;
+    const standortSel = container.querySelector('#ex-standort');
+    if (standortSel) standortSel.addEventListener('change', e => { state.standort = e.target.value; loadExportTab(); });
+    container.querySelector('#ex-firma').addEventListener('change', e => { state.exportFirma = e.target.value; });
+    container.querySelector('#ex-von').addEventListener('change', e => { state.exportVon = e.target.value; });
+    container.querySelector('#ex-bis').addEventListener('change', e => { state.exportBis = e.target.value; });
+    container.querySelector('#ex-download').addEventListener('click', exportDownload);
+    container.querySelector('#ex-senden').addEventListener('click', exportSenden);
+  }
+
+  function exportDownload() {
+    const standort = istSuperadmin() ? state.standort : state.admin.standort;
+    if (!standort) { state.exportMsg = 'Bitte zuerst einen Standort wählen.'; renderTabContent(); return; }
+    const params = new URLSearchParams();
+    if (istSuperadmin()) params.set('standort', standort);
+    if (state.exportFirma) params.set('firma', state.exportFirma);
+    if (state.exportVon) params.set('von', state.exportVon);
+    if (state.exportBis) params.set('bis', state.exportBis);
+    window.open(`/api/export/schluessel?${params.toString()}`, '_blank');
+  }
+
+  async function exportSenden() {
+    const standort = istSuperadmin() ? state.standort : state.admin.standort;
+    if (!standort) { state.exportMsg = 'Bitte zuerst einen Standort wählen.'; renderTabContent(); return; }
+    state.exportBusy = true; state.exportMsg = '';
+    renderTabContent();
+    try {
+      const res = await fetch('/api/export/schluessel/senden', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ standort, firma: state.exportFirma || undefined, von: state.exportVon || undefined, bis: state.exportBis || undefined })
+      });
+      const body = await res.json().catch(() => ({}));
+      state.exportMsg = res.ok ? `OK:Gesendet an ${body.email}.` : (body.error || 'Senden fehlgeschlagen.');
+    } catch (e) { state.exportMsg = 'Senden fehlgeschlagen.'; }
+    state.exportBusy = false;
+    renderTabContent();
+  }
+
+  // ===== Standorte (inkl. Kiosk-Design) ======================================
+
+  async function loadStandorteTab() {
+    await ladeStandorteListe();
+    renderTabContent();
+  }
+
+  function renderStandorteTab(container) {
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Neuen Standort anlegen</h3>
+        <div class="formzeile">
+          <input type="text" id="st-name" placeholder="Name des Standorts" />
+          <button class="btn" id="st-anlegen">Anlegen</button>
+        </div>
+        <p class="error" id="st-error"></p>
+      </div>
+      <div class="karten-grid">
+        ${state.standorte.map(s => `
+          <div class="standort-karte" data-id="${s.id}">
+            <div class="vorschau" ${s.hintergrund_dateiname ? `style="background-image:url('/uploads/${s.hintergrund_dateiname}')"` : ''}>${s.hintergrund_dateiname ? '' : 'Kein Kiosk-Hintergrund'}</div>
+            <div class="name">${escapeHtml(s.name)}</div>
+            <div class="hinweis">${s.domain_anzahl} Domain(s) · ${s.nutzer_anzahl} Nutzer</div>
+            <input type="text" data-willkommenstext="${s.id}" placeholder="Willkommenstext (optional)" value="${escapeAttr(s.willkommenstext || '')}" />
+            <div class="formzeile" style="margin-bottom:6px">
+              <button class="action-btn sekundaer" data-save-text="${s.id}">Text speichern</button>
+              <label class="btn sekundaer" style="cursor:pointer;margin:0">
+                Bild wählen <input type="file" accept="image/png,image/jpeg,image/webp" data-upload="${s.id}" style="display:none" />
+              </label>
+              ${s.hintergrund_dateiname ? `<button class="action-btn sekundaer" data-remove-bg="${s.id}">Bild entfernen</button>` : ''}
+              <button class="action-btn gefahr" data-delete="${s.id}">Löschen</button>
+            </div>
+            <p class="error" data-fehler="${s.id}"></p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.querySelector('#st-anlegen').addEventListener('click', async () => {
+      const name = container.querySelector('#st-name').value.trim();
+      const errEl = container.querySelector('#st-error');
+      if (!name) { errEl.textContent = 'Bitte einen Namen eingeben.'; return; }
+      const res = await fetch('/api/dashboard/standorte', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errEl.textContent = b.error || 'Fehler beim Anlegen.'; return; }
+      errEl.textContent = '';
+      loadStandorteTab();
+    });
+
+    container.querySelectorAll('[data-save-text]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        await fetch(`/api/${typ}/${btn.dataset.abmelden}/abmelden`, { method: 'PATCH' });
-        loadData();
+        const id = btn.dataset.saveText;
+        const willkommenstext = container.querySelector(`[data-willkommenstext="${id}"]`).value;
+        await fetch(`/api/dashboard/standorte/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ willkommenstext }) });
+        loadStandorteTab();
+      });
+    });
+
+    container.querySelectorAll('[data-upload]').forEach(input => {
+      input.addEventListener('change', async () => {
+        const id = input.dataset.upload;
+        const fehlerEl = container.querySelector(`[data-fehler="${id}"]`);
+        if (!input.files.length) return;
+        const formData = new FormData();
+        formData.append('bild', input.files[0]);
+        const res = await fetch(`/api/dashboard/standorte/${id}/hintergrund`, { method: 'POST', body: formData });
+        if (!res.ok) { const b = await res.json().catch(() => ({})); fehlerEl.textContent = b.error || 'Upload fehlgeschlagen.'; return; }
+        loadStandorteTab();
+      });
+    });
+
+    container.querySelectorAll('[data-remove-bg]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Hintergrundbild entfernen?')) return;
+        await fetch(`/api/dashboard/standorte/${btn.dataset.removeBg}/hintergrund`, { method: 'DELETE' }); loadStandorteTab();
+      });
+    });
+
+    container.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diesen Standort wirklich löschen?')) return;
+        const id = btn.dataset.delete;
+        const fehlerEl = container.querySelector(`[data-fehler="${id}"]`);
+        const res = await fetch(`/api/dashboard/standorte/${id}`, { method: 'DELETE' });
+        if (!res.ok) { const b = await res.json().catch(() => ({})); fehlerEl.textContent = b.error || 'Löschen fehlgeschlagen.'; return; }
+        loadStandorteTab();
       });
     });
   }
 
-  function formatTime(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  // ===== Domains ==============================================================
+
+  async function loadDomainsTab() {
+    if (!state.standorte.length) await ladeStandorteListe();
+    try {
+      const res = await fetch('/api/dashboard/domains');
+      state.domains = res.ok ? await res.json() : [];
+    } catch (e) { state.domains = []; }
+    renderTabContent();
   }
 
+  function renderDomainsTab(container) {
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Domain einem Standort zuordnen</h3>
+        <div class="formzeile">
+          <input type="text" id="dm-host" placeholder="z. B. hauptgebaeude.example.com" />
+          <select id="dm-standort">${state.standorte.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select>
+          <button class="btn" id="dm-anlegen">Zuordnen</button>
+        </div>
+        <p class="error" id="dm-error"></p>
+        <p class="hinweis">Die Domain muss zusätzlich in Coolify als Domain dieser Ressource eingetragen sein, damit sie tatsächlich erreichbar ist.</p>
+      </div>
+      ${state.domains.length ? `
+      <table>
+        <thead><tr><th>Hostname</th><th>Standort</th><th>Angelegt</th><th></th></tr></thead>
+        <tbody>
+          ${state.domains.map(d => `<tr><td>${escapeHtml(d.hostname)}</td><td>${escapeHtml(d.standort_name)}</td><td>${formatTime(d.erstellt_um)}</td><td><button class="action-btn gefahr" data-delete-domain="${d.id}">Entfernen</button></td></tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty">Noch keine Domains zugeordnet — ohne Zuordnung nutzt der Kiosk automatisch den einzigen vorhandenen Standort.</div>'}
+    `;
+    container.querySelector('#dm-anlegen').addEventListener('click', async () => {
+      const hostname = container.querySelector('#dm-host').value.trim();
+      const standort_id = container.querySelector('#dm-standort').value;
+      const errEl = container.querySelector('#dm-error');
+      const res = await fetch('/api/dashboard/domains', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hostname, standort_id }) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errEl.textContent = b.error || 'Fehler beim Anlegen.'; return; }
+      errEl.textContent = '';
+      loadDomainsTab();
+    });
+    container.querySelectorAll('[data-delete-domain]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diese Domain-Zuordnung wirklich entfernen?')) return;
+        await fetch(`/api/dashboard/domains/${btn.dataset.deleteDomain}`, { method: 'DELETE' }); loadDomainsTab();
+      });
+    });
+  }
+
+  // ===== Nutzer ================================================================
+
+  async function loadNutzerTab() {
+    if (!state.standorte.length) await ladeStandorteListe();
+    try {
+      const res = await fetch('/api/dashboard/nutzer');
+      state.nutzer = res.ok ? await res.json() : [];
+    } catch (e) { state.nutzer = []; }
+    renderTabContent();
+  }
+
+  function renderNutzerTab(container) {
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Neuen Zugang anlegen</h3>
+        <div class="formzeile">
+          <input type="text" id="nu-user" placeholder="Benutzername" />
+          <input type="password" id="nu-pass" placeholder="Passwort (mind. 8 Zeichen)" />
+          <select id="nu-standort"><option value="">Alle Standorte (Superadmin)</option>${state.standorte.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select>
+          <button class="btn" id="nu-anlegen">Anlegen</button>
+        </div>
+        <p class="error" id="nu-error"></p>
+      </div>
+      <table>
+        <thead><tr><th>Benutzername</th><th>Zugriff</th><th>Angelegt</th><th></th></tr></thead>
+        <tbody>
+          ${state.nutzer.map(n => `
+            <tr>
+              <td>${escapeHtml(n.username)}</td>
+              <td>${n.standort_name ? escapeHtml(n.standort_name) : '<span class="pill offen">Alle Standorte</span>'}</td>
+              <td>${formatTime(n.erstellt_um)}</td>
+              <td class="actions-cell">
+                <button class="action-btn sekundaer" data-reset="${n.id}">Passwort setzen</button>
+                <button class="action-btn gefahr" data-delete-nutzer="${n.id}">Löschen</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    container.querySelector('#nu-anlegen').addEventListener('click', async () => {
+      const username = container.querySelector('#nu-user').value.trim();
+      const password = container.querySelector('#nu-pass').value;
+      const standort_id = container.querySelector('#nu-standort').value || null;
+      const errEl = container.querySelector('#nu-error');
+      const res = await fetch('/api/dashboard/nutzer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, standort_id }) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errEl.textContent = b.error || 'Fehler beim Anlegen.'; return; }
+      errEl.textContent = '';
+      loadNutzerTab();
+    });
+    container.querySelectorAll('[data-reset]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const neu = prompt('Neues Passwort (mind. 8 Zeichen):');
+        if (!neu) return;
+        const res = await fetch(`/api/dashboard/nutzer/${btn.dataset.reset}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: neu }) });
+        if (!res.ok) { const b = await res.json().catch(() => ({})); alert(b.error || 'Fehler.'); }
+      });
+    });
+    container.querySelectorAll('[data-delete-nutzer]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diesen Zugang wirklich löschen?')) return;
+        const res = await fetch(`/api/dashboard/nutzer/${btn.dataset.deleteNutzer}`, { method: 'DELETE' });
+        if (!res.ok) { const b = await res.json().catch(() => ({})); alert(b.error || 'Fehler.'); return; }
+        loadNutzerTab();
+      });
+    });
+  }
+
+  // ===== Kunden ================================================================
+
+  async function loadKundenTab() {
+    try {
+      const res = await fetch('/api/dashboard/kunden');
+      state.kunden = res.ok ? await res.json() : [];
+    } catch (e) { state.kunden = []; }
+    renderTabContent();
+  }
+
+  function renderKundenTab(container) {
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Kunden-Kontakt für Exporte hinterlegen</h3>
+        <p class="hinweis" style="margin-top:-4px">Firma muss exakt so geschrieben sein wie bei den Schlüssel-Einträgen, damit der Export sie automatisch findet.</p>
+        <div class="formzeile">
+          <input type="text" id="ku-firma" placeholder="Firma" />
+          <input type="email" id="ku-email" placeholder="E-Mail" />
+          <input type="text" id="ku-notiz" placeholder="Notiz (optional)" />
+          <button class="btn" id="ku-anlegen">Anlegen</button>
+        </div>
+        <p class="error" id="ku-error"></p>
+      </div>
+      ${state.kunden.length ? `
+      <table>
+        <thead><tr><th>Firma</th><th>E-Mail</th><th>Notiz</th><th></th></tr></thead>
+        <tbody>
+          ${state.kunden.map(k => `<tr><td>${escapeHtml(k.firma)}</td><td>${escapeHtml(k.email || '—')}</td><td>${escapeHtml(k.notiz || '—')}</td><td class="actions-cell"><button class="action-btn sekundaer" data-edit-kunde="${k.id}">Bearbeiten</button><button class="action-btn gefahr" data-delete-kunde="${k.id}">Löschen</button></td></tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty">Noch keine Kunden hinterlegt.</div>'}
+    `;
+    container.querySelector('#ku-anlegen').addEventListener('click', async () => {
+      const firma = container.querySelector('#ku-firma').value.trim();
+      const email = container.querySelector('#ku-email').value.trim();
+      const notiz = container.querySelector('#ku-notiz').value.trim();
+      const errEl = container.querySelector('#ku-error');
+      const res = await fetch('/api/dashboard/kunden', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firma, email, notiz }) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errEl.textContent = b.error || 'Fehler beim Anlegen.'; return; }
+      errEl.textContent = '';
+      loadKundenTab();
+    });
+    container.querySelectorAll('[data-edit-kunde]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const kunde = state.kunden.find(k => k.id === Number(btn.dataset.editKunde));
+        const neueEmail = prompt(`E-Mail für ${kunde.firma}:`, kunde.email || '');
+        if (neueEmail === null) return;
+        const neueNotiz = prompt(`Notiz für ${kunde.firma}:`, kunde.notiz || '');
+        if (neueNotiz === null) return;
+        await fetch(`/api/dashboard/kunden/${kunde.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: neueEmail, notiz: neueNotiz }) });
+        loadKundenTab();
+      });
+    });
+    container.querySelectorAll('[data-delete-kunde]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diesen Kunden wirklich löschen?')) return;
+        await fetch(`/api/dashboard/kunden/${btn.dataset.deleteKunde}`, { method: 'DELETE' }); loadKundenTab();
+      });
+    });
+  }
+
+  // ===== Aktivität (Audit-Log) ================================================
+
+  async function loadAktivitaetTab() {
+    try {
+      const res = await fetch('/api/dashboard/audit-log');
+      state.auditLog = res.ok ? await res.json() : [];
+    } catch (e) { state.auditLog = []; }
+    renderTabContent();
+  }
+
+  function renderAktivitaetTab(container) {
+    container.innerHTML = state.auditLog.length ? `
+      <table>
+        <thead><tr><th>Zeitpunkt</th><th>Benutzer</th><th>Aktion</th><th>Detail</th></tr></thead>
+        <tbody>
+          ${state.auditLog.map(a => `<tr><td>${formatTime(a.zeitpunkt)}</td><td>${escapeHtml(a.username)}</td><td>${escapeHtml(a.aktion)}</td><td>${escapeHtml(a.detail || '—')}</td></tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty">Noch keine Aktivität protokolliert.</div>';
+  }
+
+  // ===== Hilfsfunktionen =======================================================
+
+  function formatTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str == null ? '' : str;

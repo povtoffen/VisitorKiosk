@@ -97,12 +97,18 @@
 <body>
 <div id="kiosk-root"></div>
 
-<!-- KIOSK_API_KEY und der fest zugeordnete Standort werden serverseitig eingesetzt -->
-<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__", standort: "__STANDORT__" };</script>
+<!-- KIOSK_API_KEY, Standort, Hintergrund und Willkommenstext werden serverseitig eingesetzt -->
+<script>window.KIOSK_CONFIG = { apiKey: "__KIOSK_API_KEY__", standort: "__STANDORT__", hintergrundUrl: "__HINTERGRUND_URL__", willkommenstext: "__WILLKOMMENSTEXT__" };</script>
 
 <script>
 (function() {
   const root = document.getElementById('kiosk-root');
+
+  if (window.KIOSK_CONFIG.hintergrundUrl) {
+    root.style.backgroundImage = `linear-gradient(rgba(27,36,48,0.55), rgba(27,36,48,0.78)), url('${window.KIOSK_CONFIG.hintergrundUrl}')`;
+    root.style.backgroundSize = 'cover';
+    root.style.backgroundPosition = 'center';
+  }
 
   function leererState() {
     return {
@@ -145,7 +151,7 @@
     cardShell(`
       <div class="top">
         <p class="eyebrow">Empfang — ${escapeHtml(state.standort)}</p>
-        <h1 class="display">Willkommen!</h1>
+        <h1 class="display">${escapeHtml(window.KIOSK_CONFIG.willkommenstext || 'Willkommen!')}</h1>
       </div>
       <div class="rollen">
         <button type="button" class="rollen-btn" data-rolle="besucher">

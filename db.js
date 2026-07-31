@@ -4,13 +4,15 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'data.db');
+const DATA_DIR = path.dirname(DB_PATH);
 
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 
-// Tabellen anlegen, falls sie noch nicht existieren (frische Installation).
+// --- Grundschema (frische Installation) -------------------------------------
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS besucher (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,15 +43,48 @@ db.exec(`
     zeitpunkt TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS standorte (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    hintergrund_dateiname TEXT,
+    willkommenstext TEXT,
+    erstellt_um TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS domains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname TEXT NOT NULL UNIQUE,
+    standort_id INTEGER NOT NULL REFERENCES standorte(id) ON DELETE CASCADE,
+    erstellt_um TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS admin_users (
-    username TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    standort TEXT
+    standort_id INTEGER REFERENCES standorte(id) ON DELETE SET NULL,
+    erstellt_um TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS kunden (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    firma TEXT NOT NULL UNIQUE,
+    email TEXT,
+    notiz TEXT,
+    erstellt_um TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    zeitpunkt TEXT NOT NULL,
+    username TEXT NOT NULL,
+    aktion TEXT NOT NULL,
+    detail TEXT
   );
 `);
 
-// Migration: bestehende Installationen bekommen fehlende Spalten nachgerüstet,
-// statt beim Start abzustürzen.
+// --- Migration: fehlende Spalten an bestehenden Installationen nachrüsten ---
+
 function spalteHinzufuegenFallsFehlt(tabelle, spalte, definition) {
   const vorhandeneSpalten = db.prepare(`PRAGMA table_info(${tabelle})`).all().map(c => c.name);
   if (!vorhandeneSpalten.includes(spalte)) {
@@ -68,6 +103,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_handwerker_offen ON handwerker (abgemeldet_um);
   CREATE INDEX IF NOT EXISTS idx_handwerker_standort ON handwerker (standort);
   CREATE INDEX IF NOT EXISTS idx_schluessel_standort_schluessel ON schluessel (standort, schluessel);
+  CREATE INDEX IF NOT EXISTS idx_schluessel_standort_firma ON schluessel (standort, firma);
+  CREATE INDEX IF NOT EXISTS idx_admin_users_standort ON admin_users (standort_id);
 `);
 
 // --- Passwort-Hashing (Node-eigenes crypto, keine zusätzliche Abhängigkeit) ---
@@ -88,43 +125,97 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(a, b);
 }
 
-// --- Admin-Benutzer aus Umgebungsvariable synchronisieren -------------------
-// ADMIN_USERS="username:passwort:standort;username2:passwort2:standort2"
-// Standort leer lassen => Zugriff auf alle Standorte (Superadmin).
-// Die Umgebungsvariable ist die Quelle der Wahrheit: bestehende Nutzer werden
-// aktualisiert, nicht mehr in der Variable enthaltene Nutzer werden entfernt.
-function syncAdminUsers() {
-  const raw = process.env.ADMIN_USERS || '';
-  const eintraege = raw.split(';').map(s => s.trim()).filter(Boolean);
-  const aktuelleUsernames = [];
+// Liefert die ID eines Standorts anhand des Namens, legt ihn bei Bedarf an
+// (genutzt bei Migration/Import, wo Standorte bislang nur als Text existierten).
+function sicherstellenStandort(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return null;
+  const bestehend = db.prepare('SELECT id FROM standorte WHERE name = ?').get(trimmed);
+  if (bestehend) return bestehend.id;
+  const info = db.prepare('INSERT INTO standorte (name, erstellt_um) VALUES (?, ?)').run(trimmed, new Date().toISOString());
+  return info.lastInsertRowid;
+}
 
-  for (const eintrag of eintraege) {
-    const teile = eintrag.split(':');
-    const username = (teile[0] || '').trim();
-    const passwort = (teile[1] || '').trim();
-    const standort = (teile[2] || '').trim() || null;
-    if (!username || !passwort) continue;
-    aktuelleUsernames.push(username);
-    const hash = hashPassword(passwort);
-    db.prepare(`
-      INSERT INTO admin_users (username, password_hash, standort)
-      VALUES (?, ?, ?)
-      ON CONFLICT(username) DO UPDATE SET password_hash = excluded.password_hash, standort = excluded.standort
-    `).run(username, hash, standort);
+// --- Migration: admin_users vom alten Schema (username als Primärschlüssel,
+// Standort als Text) auf das neue Schema (ID-Nutzer, Standorte-Tabelle) heben.
+
+function migriereAdminUsersFallsNoetig() {
+  const spalten = db.prepare(`PRAGMA table_info(admin_users)`).all().map(c => c.name);
+  const hatAltesFormat = spalten.includes('standort') && !spalten.includes('standort_id');
+  if (!hatAltesFormat) return;
+
+  console.log('[MIGRATION] admin_users wird auf das neue Schema (Standorte-Tabelle) migriert.');
+  const alteZeilen = db.prepare('SELECT username, password_hash, standort FROM admin_users').all();
+  db.exec('ALTER TABLE admin_users RENAME TO admin_users_alt_migration');
+  db.exec(`
+    CREATE TABLE admin_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      standort_id INTEGER REFERENCES standorte(id) ON DELETE SET NULL,
+      erstellt_um TEXT NOT NULL
+    )
+  `);
+  const jetzt = new Date().toISOString();
+  for (const alt of alteZeilen) {
+    const standort_id = alt.standort ? sicherstellenStandort(alt.standort) : null;
+    db.prepare('INSERT INTO admin_users (username, password_hash, standort_id, erstellt_um) VALUES (?, ?, ?, ?)')
+      .run(alt.username, alt.password_hash, standort_id, jetzt);
+  }
+  db.exec('DROP TABLE admin_users_alt_migration');
+  console.log(`[MIGRATION] ${alteZeilen.length} Admin-Nutzer migriert (Passwörter blieben erhalten).`);
+}
+
+migriereAdminUsersFallsNoetig();
+
+// --- Einmaliger Import aus Umgebungsvariablen (nur wenn Tabellen noch leer) --
+// Danach ist die Datenbank die Quelle der Wahrheit; Verwaltung läuft über
+// das Dashboard (/admin), nicht mehr über diese Variablen.
+
+function seedFallsLeer() {
+  const standortAnzahlVorher = db.prepare('SELECT COUNT(*) AS n FROM standorte').get().n;
+  if (standortAnzahlVorher === 0 && process.env.STANDORTE) {
+    process.env.STANDORTE.split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+      sicherstellenStandort(name);
+    });
+    console.log('[SEED] Standorte aus STANDORTE importiert.');
   }
 
-  if (aktuelleUsernames.length) {
-    const platzhalter = aktuelleUsernames.map(() => '?').join(',');
-    db.prepare(`DELETE FROM admin_users WHERE username NOT IN (${platzhalter})`).run(...aktuelleUsernames);
-  } else {
-    db.exec('DELETE FROM admin_users');
+  const domainAnzahl = db.prepare('SELECT COUNT(*) AS n FROM domains').get().n;
+  if (domainAnzahl === 0 && process.env.STANDORT_DOMAINS) {
+    process.env.STANDORT_DOMAINS.split(',').map(s => s.trim()).filter(Boolean).forEach(eintrag => {
+      const idx = eintrag.indexOf('=');
+      if (idx === -1) return;
+      const host = eintrag.slice(0, idx).trim().toLowerCase();
+      const standortName = eintrag.slice(idx + 1).trim();
+      if (!host || !standortName) return;
+      const standortId = sicherstellenStandort(standortName);
+      db.prepare('INSERT OR IGNORE INTO domains (hostname, standort_id, erstellt_um) VALUES (?, ?, ?)')
+        .run(host, standortId, new Date().toISOString());
+    });
+    console.log('[SEED] Domains aus STANDORT_DOMAINS importiert.');
   }
 
-  if (!eintraege.length) {
-    console.warn('[WARN] ADMIN_USERS ist nicht gesetzt. Es existieren aktuell keine Admin-Zugänge.');
+  const nutzerAnzahlVorher = db.prepare('SELECT COUNT(*) AS n FROM admin_users').get().n;
+  if (nutzerAnzahlVorher === 0 && process.env.ADMIN_USERS) {
+    process.env.ADMIN_USERS.split(';').map(s => s.trim()).filter(Boolean).forEach(eintrag => {
+      const teile = eintrag.split(':');
+      const username = (teile[0] || '').trim();
+      const passwort = (teile[1] || '').trim();
+      const standortName = (teile[2] || '').trim();
+      if (!username || !passwort) return;
+      const standortId = standortName ? sicherstellenStandort(standortName) : null;
+      db.prepare('INSERT OR IGNORE INTO admin_users (username, password_hash, standort_id, erstellt_um) VALUES (?, ?, ?, ?)')
+        .run(username, hashPassword(passwort), standortId, new Date().toISOString());
+    });
+    console.log('[SEED] Admin-Nutzer aus ADMIN_USERS importiert.');
+  }
+
+  if (nutzerAnzahlVorher === 0 && !process.env.ADMIN_USERS) {
+    console.warn('[WARN] Keine Admin-Nutzer vorhanden und ADMIN_USERS nicht gesetzt. Ohne Zugang ist das Dashboard nicht erreichbar.');
   }
 }
 
-syncAdminUsers();
+seedFallsLeer();
 
-module.exports = { db, verifyPassword };
+module.exports = { db, verifyPassword, hashPassword, sicherstellenStandort, DATA_DIR };

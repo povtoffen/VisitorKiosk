@@ -1,149 +1,171 @@
 # Besucher- & Schlüssel-Terminal
 
-Kiosk-Formular (Multi-Step-Assistent) + Node.js/Express-Backend mit SQLite.
-Ein einziger Container liefert beides aus:
+Kiosk-Formular (Multi-Step-Assistent) + zentrales Verwaltungs-Dashboard,
+Node.js/Express-Backend mit SQLite. Ein einziger Container liefert alles aus:
 
-- `/` — Kiosk-Assistent, fest an einen Standort gebunden (Besucher- und
-  Handwerker-Anmeldung, Selbst-Abmeldung)
-- `/admin` — Verwaltungsportal mit Benutzer/Passwort-Login, editierbaren
-  Einträgen und optionaler Standort-Einschränkung pro Zugang
-- `/api/*` — REST-API
+- **`/`** — Kiosk-Assistent, fest an einen Standort gebunden. Auf einem
+  Hostnamen, dem kein Standort zugeordnet ist (z. B. eure Haupt-App-URL aus
+  Coolify), leitet `/` automatisch auf `/admin` weiter.
+- **`/admin`** — Dashboard mit Benutzer/Passwort-Login. Jeder Zugang sieht
+  Besucher/Handwerker/Schlüssel-Log/Export für seinen Standort. Ein
+  **Superadmin**-Zugang (kein Standort zugewiesen) sieht zusätzlich die
+  zentrale Verwaltung: Standorte, Domains, Nutzer, Kunden, Aktivitätsprotokoll.
+- **`/api/*`** — REST-API
 
 ## Der Kiosk-Ablauf
 
-Start-Bildschirm mit drei großen Buttons:
+Start-Bildschirm mit drei Buttons — **Ich bin Besucher** / **Ich bin
+Handwerker** (mit optionaler Schlüsselvergabe) / **Ich möchte mich
+abmelden** — jeweils als kurzer Multi-Step-Assistent. Der **Standort ist am
+Kiosk nicht wechselbar**, sondern wird serverseitig über den aufgerufenen
+Hostnamen fest zugeordnet. Optional lässt sich pro Standort ein
+Hintergrundbild und ein individueller Willkommenstext hinterlegen (Dashboard
+→ Tab „Standorte").
 
-- **Ich bin Besucher** → Name → Firma → Ansprechpartner/Grund → Bestätigen
-- **Ich bin Handwerker** → Name → Firma → „Brauchen Sie einen Schlüssel?"
-  (Ja/Nein) → ggf. welchen → Bestätigen
-- **Ich möchte mich abmelden** → Liste aller aktuell anwesenden Besucher und
-  Handwerker am Standort → auswählen → ggf. Schlüsselrückgabe bestätigen →
-  fertig
+## Alles wird jetzt über das Dashboard verwaltet
 
-Der **Standort ist am Kiosk nicht wechselbar** — er wird serverseitig anhand
-des aufgerufenen Hostnamens fest zugeordnet (siehe unten), damit niemand
-versehentlich den falschen Standort einträgt.
+Diese Version hat einen wichtigen Unterschied zur vorherigen: **Standorte,
+Domains und Admin-Zugänge werden nicht mehr über Umgebungsvariablen
+gepflegt**, sondern in der Datenbank und über das Dashboard unter `/admin`
+(Tabs „Standorte", „Domains", „Nutzer" für Superadmins).
 
-## Standort-Zuordnung (mit Vorbereitung für Subdomains/Wildcard)
+`STANDORTE`, `STANDORT_DOMAINS` und `ADMIN_USERS` in der `.env` werden nur
+noch **einmalig beim allerersten Start** eingelesen, falls die jeweilige
+Tabelle in der Datenbank noch leer ist — das erleichtert die Ersteinrichtung
+bzw. den Umstieg von einer älteren Version. Ist eine Tabelle einmal befüllt
+(egal ob durch den Import oder manuell über das Dashboard), haben diese
+Variablen keine Wirkung mehr. Ihr könnt sie nach der Ersteinrichtung aus
+Coolify entfernen.
 
-- **Ein einziger Standort:** `STANDORTE` auf genau einen Eintrag setzen —
-  der Kiosk verwendet ihn automatisch, `STANDORT_DOMAINS` wird nicht benötigt.
-- **Mehrere Standorte über Subdomains:** `STANDORTE` mit allen Standorten
-  befüllen und zusätzlich `STANDORT_DOMAINS` setzen, z. B.:
-  ```
-  STANDORT_DOMAINS=hauptgebaeude.empfang.example.com=Hauptgebäude,lager-nord.empfang.example.com=Lager Nord
-  ```
-  Jedes Kiosk-Gerät ruft dann nur seine eigene, feste Subdomain auf (als
-  Startseite im Kiosk-Modus des Browsers hinterlegen) und bekommt darüber
-  automatisch den richtigen Standort — ganz ohne Auswahl.
-
-  **Hinweis zu "Wildcard":** Ein echtes Wildcard-TLS-Zertifikat (`*.example.com`)
-  ist dafür nicht zwingend nötig. Es reicht, in Coolify für dieselbe Ressource
-  mehrere Domains einzutragen (eine pro Standort) — Coolify/Traefik stellt für
-  jede davon automatisch ein eigenes Let's-Encrypt-Zertifikat aus. Ein echtes
-  Wildcard-Zertifikat lohnt sich nur, wenn ihr Standorte spontan hinzufügen
-  wollt, ohne jedes Mal eine neue Domain in Coolify einzutragen — dafür braucht
-  euer DNS-Anbieter dann einen von Coolify unterstützten DNS-01-Provider.
-- Ist ein Hostname weder in `STANDORT_DOMAINS` hinterlegt noch der einzige
-  konfigurierte Standort, zeigt `/` eine Fehlerseite statt zu raten.
-
-## Admin-Zugänge pro Standort
-
-Über `ADMIN_USERS` (Format `username:passwort:standort`, mehrere getrennt mit
-`;`) werden Zugänge angelegt:
-
+**Für dieses Update reicht es, `ADMIN_USERS` einmal mit einem Superadmin zu
+setzen** (Standort-Teil leer lassen), z. B.:
 ```
-ADMIN_USERS=chef:geheim1:;hauptgebaeude:geheim2:Hauptgebäude;lagernord:geheim3:Lager Nord
+ADMIN_USERS=admin:EuerSicheresPasswort:
 ```
+Danach meldet ihr euch unter `/admin` an und richtet Standorte, Domains und
+weitere Nutzer bequem über die Oberfläche ein. Eure bereits vorhandene
+`admin_users`-Tabelle aus der vorherigen Version wird beim Start automatisch
+migriert — bestehende Passwörter bleiben dabei erhalten.
 
-- Ein Zugang mit **leerem Standort** ist ein Superadmin und sieht/verwaltet
-  alle Standorte (inkl. Standort-Filter im Portal).
-- Ein Zugang mit **gesetztem Standort** sieht und bearbeitet ausschließlich
-  Einträge dieses Standorts — Zugriffsversuche auf andere Standorte werden
-  serverseitig abgelehnt (nicht nur in der Oberfläche versteckt).
-- Die Umgebungsvariable ist die Quelle der Wahrheit: Passwörter werden bei
-  jedem Start neu gehasht und synchronisiert, nicht mehr gelistete Zugänge
-  werden entfernt. Ein Passwort ändern = Env-Variable anpassen + Redeploy.
-- Passwörter werden nie im Klartext gespeichert (scrypt-Hash), Logins laufen
-  über eine signierte, httpOnly-Session-Cookie (`SESSION_SECRET` erforderlich).
+## Zentrale Verwaltung (Superadmin-Bereich im Dashboard)
 
-## Verwaltungsportal (`/admin`)
+- **Standorte**: anlegen, umbenennen, löschen (nur möglich, wenn keine
+  Domain und kein Nutzer mehr zugeordnet ist — verhindert versehentliches
+  Verwaisen von Zugängen). Pro Standort: Kiosk-Hintergrundbild hochladen
+  (PNG/JPEG/WebP, max. 6 MB) und individuellen Willkommenstext setzen.
+- **Domains**: Hostnamen einem Standort zuordnen (siehe unten zu Subdomains).
+- **Nutzer**: Zugänge anlegen, Passwort zurücksetzen, Standort zuweisen oder
+  entfernen, löschen. Der letzte verbleibende Superadmin ist geschützt und
+  kann weder gelöscht noch auf einen Standort eingeschränkt werden, damit ihr
+  euch nicht selbst aussperrt.
+- **Kunden**: E-Mail-Kontakt pro Firma hinterlegen, für den Ein-Klick-Versand
+  von Exporten.
+- **Aktivität**: Protokoll aller verwaltenden Aktionen (wer hat wann was an
+  Standorten/Domains/Nutzern geändert).
 
-- Drei Tabs: **Besucher**, **Handwerker**, **Schlüssel-Log**
-- „Bearbeiten" pro Zeile: Name, Firma und weitere Felder direkt inline
-  korrigierbar (z. B. Tippfehler)
-- „Abmelden" pro Zeile: meldet den Eintrag ab; bei Handwerkern mit offenem
-  Schlüssel wird dieser automatisch mit zurückgenommen
-- Tab „Schlüssel-Log": vollständige Historie aller Schlüsselbewegungen,
-  mit manuellem „Zurückgeben" als Fallback (falls doch mal nicht über den
-  Kiosk abgemeldet wurde)
+Jeder eingeloggte Zugang (auch standortgebunden) kann außerdem im Tab
+„Export" die Schlüssel-Historie seines Standorts als CSV herunterladen oder
+direkt per E-Mail an eine hinterlegte oder eingetippte Adresse senden.
 
-## Absicherung
+## Mehrere Standorte über Subdomains
+
+1. Im Dashboard unter „Standorte" die gewünschten Standorte anlegen.
+2. Unter „Domains" jeden Hostnamen (z. B. `hauptgebaeude.empfang.example.com`)
+   dem passenden Standort zuordnen.
+3. Denselben Hostnamen zusätzlich **in Coolify** als Domain dieser Ressource
+   eintragen — sonst ist er von außen nicht erreichbar.
+
+**Zu „Wildcard":** Ein echtes Wildcard-TLS-Zertifikat ist dafür nicht
+zwingend nötig. Es reicht, in Coolify mehrere Domains für dieselbe Ressource
+einzutragen — Traefik stellt dafür automatisch je ein eigenes
+Let's-Encrypt-Zertifikat aus. Ein echtes Wildcard-Zertifikat lohnt sich nur,
+wenn ihr Standorte sehr häufig hinzufügt und die Domain-Pflege in Coolify
+vermeiden wollt; dafür braucht euer DNS-Anbieter einen von Coolify
+unterstützten DNS-01-Provider.
+
+Ruft ihr die App-URL auf, die keinem Standort zugeordnet ist (typischerweise
+die Haupt-Domain aus Coolify), landet ihr automatisch im Dashboard.
+
+## Sicherheit
 
 - **`SESSION_SECRET`** signiert die Admin-Login-Sessions (httpOnly-Cookie,
-  12 Stunden gültig). Ohne diesen Wert funktionieren Admin-Logins nicht sicher.
-- **`ADMIN_USERS`** ersetzt den früheren einzelnen Admin-Key durch echte,
-  standortgebundene Zugänge (siehe oben).
+  12 Stunden gültig, `SameSite=Lax`). Da alle verändernden Endpunkte
+  POST/PATCH/DELETE verwenden, schützt `SameSite=Lax` bereits wirksam gegen
+  CSRF-Angriffe — ein zusätzliches CSRF-Token ist dadurch nicht nötig.
+- Passwörter werden nie im Klartext gespeichert (scrypt-Hash mit Salt).
+- Der letzte Superadmin kann nicht gelöscht oder eingeschränkt werden
+  (verhindert Selbst-Aussperrung).
+- Standort-Löschung ist blockiert, solange noch Domains oder Nutzer daran
+  hängen.
+- Hochgeladene Kiosk-Hintergrundbilder werden mit zufälligem Dateinamen
+  gespeichert, auf Bild-MIME-Typen beschränkt (PNG/JPEG/WebP) und auf 6 MB
+  begrenzt.
 - **`KIOSK_API_KEY`** schützt weiterhin die Schreib-Endpunkte vor Bot-Traffic
   (plus Rate-Limit). Da das Kiosk-Terminal öffentlich zugänglich ist, ist
   dieser Key über "Seitenquelltext anzeigen" einsehbar — kein Geheimnis
   gegenüber jemandem direkt am Gerät, aber wirksam gegen automatisierten
   Missbrauch von außen.
+- Jede verändernde Aktion im Superadmin-Bereich wird im Aktivitätsprotokoll
+  festgehalten (wer, was, wann).
 - HTTPS über den Reverse-Proxy nicht vergessen (in Coolify Standard) — sonst
   gehen Passwörter und Keys unverschlüsselt raus.
+- SMTP-Zugangsdaten liegen bewusst nur in Umgebungsvariablen, nicht in der
+  Datenbank oder im Dashboard editierbar — ein kompromittierter Admin-Zugang
+  kann damit keine SMTP-Zugangsdaten auslesen oder ändern.
 
 ## Lokal starten
 
 ```bash
 cp .env.example .env
-# .env anpassen: KIOSK_API_KEY, SESSION_SECRET, STANDORTE, ADMIN_USERS setzen
+# .env anpassen: KIOSK_API_KEY, SESSION_SECRET, ADMIN_USERS setzen
 npm install
 npm start
 ```
 
-Kiosk: `http://localhost:3000/` (nutzt den einzigen konfigurierten Standort,
-falls `STANDORTE` nur einen Eintrag hat)
-Verwaltung: `http://localhost:3000/admin`
+Dashboard: `http://localhost:3000/admin`
+Kiosk: `http://localhost:3000/` (nutzt automatisch den einzigen vorhandenen Standort)
 
 ## Deployment via Coolify
 
 1. Projekt in ein Git-Repository pushen.
 2. In Coolify eine neue Ressource per Git-Deployment anlegen,
    `docker-compose.yml` als Compose-Datei auswählen.
-3. Umgebungsvariablen setzen: `KIOSK_API_KEY`, `SESSION_SECRET`, `STANDORTE`,
-   `STANDORT_DOMAINS` (falls mehrere Standorte), `ADMIN_USERS`, `CORS_ORIGIN`.
-4. Bei mehreren Standorten: alle Subdomains als Domains dieser Ressource in
-   Coolify eintragen (siehe oben).
-5. Das Volume `besucher-data` sorgt für persistente Speicherung der
-   SQLite-Datei über Neustarts/Deployments hinweg.
+3. Umgebungsvariablen setzen: mindestens `KIOSK_API_KEY`, `SESSION_SECRET`,
+   `ADMIN_USERS` (siehe oben). Optional `SMTP_*` für den E-Mail-Export.
+4. Bei mehreren Standorten: alle Subdomains zusätzlich als Domains dieser
+   Ressource in Coolify eintragen.
+5. Das Volume `besucher-data` sorgt für persistente Speicherung von
+   SQLite-Datenbank **und** hochgeladenen Kiosk-Hintergrundbildern
+   (`/app/data/uploads`) über Neustarts/Deployments hinweg.
 
 ## API (Auswahl)
 
 | Methode | Pfad | Auth | Zweck |
 |---|---|---|---|
 | GET | `/api/health` | — | Health-Check |
-| GET | `/api/standorte` | — | Konfigurierte Standort-Liste |
-| POST | `/api/admin/login` | — | Admin-Login (setzt Session-Cookie) |
-| POST | `/api/admin/logout` | — | Admin-Logout |
-| GET | `/api/admin/me` | Session | Eigene Zugangsdaten (Username, Standort) |
+| POST | `/api/admin/login` / `/api/admin/logout` | — | Admin-Login/-Logout |
+| GET | `/api/admin/me` | Session | Eigene Zugangsdaten |
+| POST | `/api/admin/passwort` | Session | Eigenes Passwort ändern |
 | POST | `/api/besucher` / `/api/handwerker` | `KIOSK_API_KEY` | Neue Anmeldung |
 | GET | `/api/besucher` / `/api/handwerker` / `/api/schluessel` | Session | Listen (standortgefiltert) |
 | PATCH | `/api/besucher/:id` / `/api/handwerker/:id` | Session | Eintrag bearbeiten |
-| PATCH | `/api/besucher/:id/abmelden` / `/api/handwerker/:id/abmelden` | Session | Abmelden (Portal) |
-| GET | `/api/checkins/offene-liste` | `KIOSK_API_KEY` | Liste für Selbst-Abmeldung am Kiosk |
-| PATCH | `/api/checkins/:typ/:id/abmelden` | `KIOSK_API_KEY` | Selbst-Abmeldung am Kiosk |
-| PATCH | `/api/schluessel/:id/zurueckgeben` | Session | Schlüssel manuell zurücknehmen |
-
-Kiosk-Endpunkte nutzen den Header `x-api-key`, Admin-Endpunkte die
-Session-Cookie (nach Login automatisch vom Browser mitgeschickt).
+| PATCH | `…/abmelden` | Session bzw. `KIOSK_API_KEY` | Abmelden (Portal bzw. Kiosk-Selbstbedienung) |
+| GET | `/api/export/schluessel` | Session | CSV-Export |
+| POST | `/api/export/schluessel/senden` | Session | Export per E-Mail senden |
+| GET/POST/PATCH/DELETE | `/api/dashboard/standorte` | Session (Superadmin) | Standorte verwalten |
+| POST/DELETE | `/api/dashboard/standorte/:id/hintergrund` | Session (Superadmin) | Kiosk-Hintergrundbild |
+| GET/POST/DELETE | `/api/dashboard/domains` | Session (Superadmin) | Domain-Zuordnung |
+| GET/POST/PATCH/DELETE | `/api/dashboard/nutzer` | Session (Superadmin) | Admin-Zugänge |
+| GET/POST/PATCH/DELETE | `/api/dashboard/kunden` | Session (Superadmin) | Kunden-Kontakte |
+| GET | `/api/dashboard/audit-log` | Session (Superadmin) | Aktivitätsprotokoll |
 
 ## Struktur
 
 ```
-server.js          Express-App: API, Auth, Standort-Auflösung, Ausliefern des Frontends
-db.js               SQLite-Schema, Migrationen, Admin-Benutzer-Synchronisierung
+server.js          Express-App: API, Auth, Standort-Auflösung, Uploads, Ausliefern des Frontends
+db.js               SQLite-Schema, Migrationen, einmaliger Env-Import
 public/index.html   Kiosk-Assistent
-public/admin.html   Verwaltungsportal
+public/admin.html   Dashboard (operativ + zentrale Verwaltung)
 Dockerfile          Multi-Stage-Build (kompiliert better-sqlite3)
 docker-compose.yml  Für Coolify-Deployment mit persistentem Volume
 ```
@@ -153,5 +175,9 @@ docker-compose.yml  Für Coolify-Deployment mit persistentem Volume
 - Das Bearbeiten des Schlüssel-Namens an einem Handwerker-Eintrag wirkt sich
   nicht rückwirkend auf bereits erfasste Schlüsselbewegungen im Schlüssel-Log
   aus (das Log bleibt eine unveränderliche Historie).
-- Ein Passwort-Reset-Self-Service existiert nicht — Passwörter werden über
-  `ADMIN_USERS` verwaltet.
+- Ein Standort-Umbenennen ändert nicht die `standort`-Angabe an bereits
+  bestehenden Besucher-/Handwerker-/Schlüssel-Einträgen (bewusst — die
+  Historie bleibt so, wie sie erfasst wurde).
+- Passwort-Reset-Self-Service für Nutzer selbst gibt es nicht (nur der
+  Superadmin kann Passwörter anderer Nutzer setzen); jeder Nutzer kann aber
+  im Dashboard über „Mein Passwort ändern" sein eigenes Passwort setzen.
