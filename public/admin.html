@@ -103,6 +103,7 @@
     { id: 'besucher', label: 'Besucher' },
     { id: 'handwerker', label: 'Handwerker' },
     { id: 'schluessel', label: 'Schlüssel-Log' },
+    { id: 'schluesselkatalog', label: 'Schlüssel-Katalog' },
     { id: 'export', label: 'Export' }
   ];
   const VERWALTUNG_TABS = [
@@ -121,7 +122,8 @@
     rows: [], loading: false, error: '', okMsg: '',
     editingId: null, editDraft: {},
     firmen: [], exportFirma: '', exportVon: '', exportBis: '', smtpKonfiguriert: false, exportBusy: false, exportMsg: '',
-    kunden: [], nutzer: [], domains: [], auditLog: []
+    kunden: [], nutzer: [], domains: [], auditLog: [],
+    schluesselKatalog: [], katalogStandort: '', katalogNeuerName: ''
   };
 
   function render() {
@@ -235,6 +237,7 @@
 
   function loadTabData() {
     if (['besucher', 'handwerker', 'schluessel'].includes(state.tab)) return loadListe();
+    if (state.tab === 'schluesselkatalog') return loadSchluesselKatalogTab();
     if (state.tab === 'export') return loadExportTab();
     if (state.tab === 'standorte') return loadStandorteTab();
     if (state.tab === 'domains') return loadDomainsTab();
@@ -247,6 +250,7 @@
     const c = app.querySelector('#tab-content');
     if (!c) return;
     if (['besucher', 'handwerker', 'schluessel'].includes(state.tab)) return renderOperativTab(c);
+    if (state.tab === 'schluesselkatalog') return renderSchluesselKatalogTab(c);
     if (state.tab === 'export') return renderExportTab(c);
     if (state.tab === 'standorte') return renderStandorteTab(c);
     if (state.tab === 'domains') return renderDomainsTab(c);
@@ -384,13 +388,25 @@
               <td>${escapeHtml(r.standort)}</td><td>${escapeHtml(r.schluessel)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.firma || '—')}</td>
               <td><span class="pill ${r.richtung}">${r.richtung === 'ausgabe' ? 'ausgegeben' : 'zurückgegeben'}</span></td>
               <td>${formatTime(r.zeitpunkt)}</td>
-              <td>${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-zurueckgeben="${r.id}">Zurückgeben</button>` : ''}</td>
+              <td class="actions-cell">
+                ${r.hat_unterschrift ? `<button class="action-btn sekundaer" data-unterschrift="${r.id}">Unterschrift ansehen</button>` : ''}
+                ${(r.richtung === 'ausgabe' && state.onlyOpen) ? `<button class="action-btn" data-zurueckgeben="${r.id}">Zurückgeben</button>` : ''}
+              </td>
             </tr>`).join('')}
         </tbody>
       </table>
     `;
     container.querySelectorAll('[data-zurueckgeben]').forEach(btn => {
       btn.addEventListener('click', async () => { await fetch(`/api/schluessel/${btn.dataset.zurueckgeben}/zurueckgeben`, { method: 'PATCH' }); loadListe(); });
+    });
+    container.querySelectorAll('[data-unterschrift]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const res = await fetch(`/api/schluessel/${btn.dataset.unterschrift}/unterschrift`);
+        if (!res.ok) { alert('Unterschrift konnte nicht geladen werden.'); return; }
+        const body = await res.json();
+        const fenster = window.open('', '_blank', 'width=460,height=280');
+        if (fenster) fenster.document.write(`<title>Unterschrift</title><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#F4F0E6"><img src="${body.unterschrift}" style="max-width:100%;height:auto" /></body>`);
+      });
     });
   }
 
@@ -487,6 +503,65 @@
     } catch (e) { state.exportMsg = 'Senden fehlgeschlagen.'; }
     state.exportBusy = false;
     renderTabContent();
+  }
+
+  // ===== Schlüssel-Katalog =====================================================
+
+  async function loadSchluesselKatalogTab() {
+    if (istSuperadmin() && !state.standorte.length) await ladeStandorteListe();
+    const standort = istSuperadmin() ? state.katalogStandort : state.admin.standort;
+    if (!standort) { state.schluesselKatalog = []; renderTabContent(); return; }
+    try {
+      const res = await fetch(`/api/dashboard/schluessel-katalog${istSuperadmin() ? '?standort=' + encodeURIComponent(standort) : ''}`);
+      state.schluesselKatalog = res.ok ? await res.json() : [];
+    } catch (e) { state.schluesselKatalog = []; }
+    renderTabContent();
+  }
+
+  function renderSchluesselKatalogTab(container) {
+    const standort = istSuperadmin() ? state.katalogStandort : state.admin.standort;
+    container.innerHTML = `
+      <div class="panel">
+        <h3>Auswählbare Schlüssel für diesen Standort</h3>
+        <div class="formzeile">
+          ${istSuperadmin() ? `<select id="sk-standort"><option value="">Standort wählen…</option>${state.standorte.map(s => `<option value="${escapeAttr(s.name)}" ${s.name === state.katalogStandort ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}</select>` : `<span class="standort-label">${escapeHtml(state.admin.standort)}</span>`}
+        </div>
+        ${standort ? `
+        <div class="formzeile">
+          <input type="text" id="sk-name" placeholder="z. B. Keller, Raum 2.14" />
+          <button class="btn" id="sk-anlegen">Anlegen</button>
+        </div>` : '<p class="hinweis">Bitte zuerst einen Standort wählen.</p>'}
+        <p class="error" id="sk-error"></p>
+      </div>
+      ${standort ? (state.schluesselKatalog.length ? `
+      <table>
+        <thead><tr><th>Schlüssel</th><th>Angelegt</th><th></th></tr></thead>
+        <tbody>
+          ${state.schluesselKatalog.map(k => `<tr><td>${escapeHtml(k.name)}</td><td>${formatTime(k.erstellt_um)}</td><td><button class="action-btn gefahr" data-delete-katalog="${k.id}">Löschen</button></td></tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty">Noch keine Schlüssel für diesen Standort hinterlegt.</div>') : ''}
+    `;
+    const standortSel = container.querySelector('#sk-standort');
+    if (standortSel) standortSel.addEventListener('change', e => { state.katalogStandort = e.target.value; loadSchluesselKatalogTab(); });
+    const anlegenBtn = container.querySelector('#sk-anlegen');
+    if (anlegenBtn) anlegenBtn.addEventListener('click', async () => {
+      const name = container.querySelector('#sk-name').value.trim();
+      const errEl = container.querySelector('#sk-error');
+      if (!name) { errEl.textContent = 'Bitte einen Namen eingeben.'; return; }
+      const body = { name };
+      if (istSuperadmin()) body.standort = state.katalogStandort;
+      const res = await fetch('/api/dashboard/schluessel-katalog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); errEl.textContent = b.error || 'Fehler beim Anlegen.'; return; }
+      errEl.textContent = '';
+      loadSchluesselKatalogTab();
+    });
+    container.querySelectorAll('[data-delete-katalog]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diesen Schlüssel wirklich aus dem Katalog löschen?')) return;
+        await fetch(`/api/dashboard/schluessel-katalog/${btn.dataset.deleteKatalog}`, { method: 'DELETE' });
+        loadSchluesselKatalogTab();
+      });
+    });
   }
 
   // ===== Standorte (inkl. Kiosk-Design) ======================================
